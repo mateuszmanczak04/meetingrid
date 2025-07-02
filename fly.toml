@@ -11,6 +11,8 @@ kill_signal = 'SIGTERM'
 
 [deploy]
   release_command = '/app/bin/migrate'
+  min_machines = 0
+  max_machines = 1
 
 [env]
   PHX_HOST = 'meetingrid.fly.dev'
