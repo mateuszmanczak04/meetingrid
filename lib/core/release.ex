@@ -1,9 +1,9 @@
-defmodule Meetingrid.Release do
+defmodule Core.Release do
   @moduledoc """
   Used for executing DB release tasks when run in production without Mix
   installed.
   """
-  @app :meetingrid
+  @app :core
 
   def migrate do
     load_app()

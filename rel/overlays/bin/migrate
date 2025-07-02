@@ -2,4 +2,4 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
-exec ./meetingrid eval Meetingrid.Release.migrate
+exec ./core eval Core.Release.migrate

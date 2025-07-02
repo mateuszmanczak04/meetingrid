@@ -1,12 +1,12 @@
-defmodule MeetingridWeb do
+defmodule CoreWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
   as controllers, components, channels, and so on.
 
   This can be used in your application as:
 
-      use MeetingridWeb, :controller
-      use MeetingridWeb, :html
+      use CoreWeb, :controller
+      use CoreWeb, :html
 
   The definitions below will be executed for every controller,
   component, etc, so keep them short and clean, focused
@@ -40,9 +40,9 @@ defmodule MeetingridWeb do
     quote do
       use Phoenix.Controller,
         formats: [:html, :json],
-        layouts: [html: MeetingridWeb.Layouts]
+        layouts: [html: CoreWeb.Layouts]
 
-      use Gettext, backend: MeetingridWeb.Gettext
+      use Gettext, backend: CoreWeb.Gettext
 
       import Plug.Conn
 
@@ -53,7 +53,7 @@ defmodule MeetingridWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: {MeetingridWeb.Layouts, :app}
+        layout: {CoreWeb.Layouts, :app}
 
       unquote(html_helpers())
     end
@@ -83,12 +83,12 @@ defmodule MeetingridWeb do
   defp html_helpers do
     quote do
       # Translation
-      use Gettext, backend: MeetingridWeb.Gettext
+      use Gettext, backend: CoreWeb.Gettext
 
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components
-      import MeetingridWeb.CoreComponents
+      import CoreWeb.CoreComponents
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
@@ -101,9 +101,9 @@ defmodule MeetingridWeb do
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
-        endpoint: MeetingridWeb.Endpoint,
-        router: MeetingridWeb.Router,
-        statics: MeetingridWeb.static_paths()
+        endpoint: CoreWeb.Endpoint,
+        router: CoreWeb.Router,
+        statics: CoreWeb.static_paths()
     end
   end
 

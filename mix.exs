@@ -1,9 +1,9 @@
-defmodule Meetingrid.MixProject do
+defmodule Core.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :meetingrid,
+      app: :core,
       version: "0.1.0",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -18,7 +18,7 @@ defmodule Meetingrid.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Meetingrid.Application, []},
+      mod: {Core.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end
@@ -74,10 +74,10 @@ defmodule Meetingrid.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["tailwind meetingrid", "esbuild meetingrid"],
+      "assets.build": ["tailwind core", "esbuild core"],
       "assets.deploy": [
-        "tailwind meetingrid --minify",
-        "esbuild meetingrid --minify",
+        "tailwind core --minify",
+        "esbuild core --minify",
         "phx.digest"
       ]
     ]

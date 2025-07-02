@@ -1,5 +1,5 @@
-defmodule MeetingridWeb.PageController do
-  use MeetingridWeb, :controller
+defmodule CoreWeb.PageController do
+  use CoreWeb, :controller
 
   def home(conn, _params) do
     # The home page is often custom made,

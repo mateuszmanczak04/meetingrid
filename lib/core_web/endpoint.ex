@@ -1,12 +1,12 @@
-defmodule MeetingridWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :meetingrid
+defmodule CoreWeb.Endpoint do
+  use Phoenix.Endpoint, otp_app: :core
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_meetingrid_key",
+    key: "_core_key",
     signing_salt: "HrEquA+j",
     same_site: "Lax"
   ]
@@ -21,9 +21,9 @@ defmodule MeetingridWeb.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/",
-    from: :meetingrid,
+    from: :core,
     gzip: false,
-    only: MeetingridWeb.static_paths()
+    only: CoreWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -31,7 +31,7 @@ defmodule MeetingridWeb.Endpoint do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :meetingrid
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :core
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,
@@ -49,5 +49,5 @@ defmodule MeetingridWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug MeetingridWeb.Router
+  plug CoreWeb.Router
 end

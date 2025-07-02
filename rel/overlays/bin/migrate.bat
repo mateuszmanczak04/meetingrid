@@ -1,1 +1,1 @@
-call "%~dp0\meetingrid" eval Meetingrid.Release.migrate
+call "%~dp0\core" eval Core.Release.migrate

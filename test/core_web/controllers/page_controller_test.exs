@@ -1,5 +1,5 @@
-defmodule MeetingridWeb.PageControllerTest do
-  use MeetingridWeb.ConnCase
+defmodule CoreWeb.PageControllerTest do
+  use CoreWeb.ConnCase
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")

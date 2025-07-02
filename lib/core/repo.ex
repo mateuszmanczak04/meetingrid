@@ -1,5 +1,5 @@
-defmodule Meetingrid.Repo do
+defmodule Core.Repo do
   use Ecto.Repo,
-    otp_app: :meetingrid,
+    otp_app: :core,
     adapter: Ecto.Adapters.Postgres
 end

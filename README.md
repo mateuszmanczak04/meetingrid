@@ -1,4 +1,4 @@
-# Meetingrid
+# Core
 
 To start your Phoenix server:
 

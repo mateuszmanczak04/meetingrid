@@ -7,19 +7,19 @@
 # General application configuration
 import Config
 
-config :meetingrid,
-  ecto_repos: [Meetingrid.Repo],
+config :core,
+  ecto_repos: [Core.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
-config :meetingrid, MeetingridWeb.Endpoint,
+config :core, CoreWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: MeetingridWeb.ErrorHTML, json: MeetingridWeb.ErrorJSON],
+    formats: [html: CoreWeb.ErrorHTML, json: CoreWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Meetingrid.PubSub,
+  pubsub_server: Core.PubSub,
   live_view: [signing_salt: "R40Rajgl"]
 
 # Configures the mailer
@@ -29,12 +29,12 @@ config :meetingrid, MeetingridWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :meetingrid, Meetingrid.Mailer, adapter: Swoosh.Adapters.Local
+config :core, Core.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
-  meetingrid: [
+  core: [
     args:
       ~w(js/app.js --bundle --target=es2017 --outdir=../priv/static/assets --external:/fonts/* --external:/images/*),
     cd: Path.expand("../assets", __DIR__),
@@ -44,7 +44,7 @@ config :esbuild,
 # Configure tailwind (the version is required)
 config :tailwind,
   version: "3.4.3",
-  meetingrid: [
+  core: [
     args: ~w(
       --config=tailwind.config.js
       --input=css/app.css
