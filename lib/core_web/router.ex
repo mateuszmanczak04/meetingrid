@@ -8,6 +8,7 @@ defmodule CoreWeb.Router do
     plug :put_root_layout, html: {CoreWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug CoreWeb.Plugs.RequireBrowserId
   end
 
   pipeline :api do
@@ -18,6 +19,8 @@ defmodule CoreWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/events", EventsLive
   end
 
   # Other scopes may use custom stacks.
