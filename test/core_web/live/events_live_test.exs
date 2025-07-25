@@ -9,17 +9,20 @@ defmodule CoreWeb.EventsLiveViewTest do
   end
 
   test "Two users see their mutual interactions", %{conn: conn, event: event} do
+    user_a_name = "John"
+    user_b_name = "Matt"
+
     # User 1 joins and enters name
     {:ok, view_a, _html_a} = live(conn, "/events?event_id=#{event.id}")
-    form(view_a, "#join_form", %{"name" => "John"}) |> render_submit()
-    assert has_element?(view_a, "tr > td", "You (John)")
+    form(view_a, "#join_form", %{"name" => "#{user_a_name}"}) |> render_submit()
+    assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
 
     # User 2 joins and enters name
     {:ok, view_b, _html_a} = live(conn, "/events?event_id=#{event.id}")
-    form(view_b, "#join_form", %{"name" => "Matt"}) |> render_submit()
-    assert has_element?(view_b, "tr > td", "You (Matt)")
-    assert has_element?(view_b, "tr > td", "John")
-    assert has_element?(view_a, "tr > td", "Matt")
+    form(view_b, "#join_form", %{"name" => user_b_name}) |> render_submit()
+    assert has_element?(view_b, "tr > td", "You (#{user_b_name})")
+    assert has_element?(view_b, "tr > td", "#{user_a_name}")
+    assert has_element?(view_a, "tr > td", "#{user_b_name}")
 
     # User 1 chooses days
     element(view_a, "tbody > tr:first-child > td[data-day='1']") |> render_click()
@@ -60,5 +63,11 @@ defmodule CoreWeb.EventsLiveViewTest do
              view_b,
              "tbody > tr:nth-child(2) > td[data-day='6'][data-selected='true']"
            )
+
+    #  User 1 leaves
+    element(view_a, "#leave_button") |> render_click()
+    assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")
+    assert has_element?(view_a, "#join_form")
+    assert not has_element?(view_a, "tr > td", "#{user_a_name}")
   end
 end

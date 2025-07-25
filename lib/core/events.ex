@@ -31,4 +31,8 @@ defmodule Core.Events do
     |> Attendee.changeset(attrs)
     |> Repo.update!()
   end
+
+  def delete_attendee!(%Attendee{} = attendee) do
+    Repo.delete!(attendee)
+  end
 end
