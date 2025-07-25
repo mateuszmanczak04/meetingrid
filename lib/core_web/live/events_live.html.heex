@@ -1,14 +1,25 @@
 <h1 class="font-bold text-4xl">Meetingrid</h1>
 <p>Choose the common day that you and your friends can meet together!</p>
 
-<p>Event name: {@event.title}</p>
-<p>Total attendees: {length(@other_attendees)}</p>
+<form
+  :if={!@current_attendee}
+  id="join_form"
+  phx-submit="join"
+  class="border rounded-xl p-4 max-w-xs grid mt-4"
+>
+  <label for="join_input">Please choose your name </label>
+  <input
+    class="mt-1 px-3 py-2 rounded-md border-gray-300"
+    id="join_input"
+    type="text"
+    required
+    name="name"
+    placeholder="John"
+  />
+  <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Join</button>
+</form>
 
-<div :if={!@current_attendee}>
-  Please choose your name <input type="text" />
-</div>
-
-<div :if={@event} class="mt-4">
+<div :if={@event} class="mt-6">
   <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
     <thead>
       <tr>
@@ -21,15 +32,15 @@
       </tr>
     </thead>
     <tbody>
-      <tr data-attendee={to_string(@current_attendee.id)}>
-        <td>You</td>
+      <tr :if={@current_attendee} data-attendee={to_string(@current_attendee.id)}>
+        <td>You ({@current_attendee.name})</td>
         <td
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           phx-click="choose_day"
           data-day={day_number}
           data-selected={day_number in @current_attendee.available_days && "true"}
           phx-value-day_number={day_number}
-          class="data-[selected='true']:bg-green-400"
+          class="cursor-pointer transition-colors hover:bg-green-300 data-[selected='true']:bg-green-400"
         >
         </td>
       </tr>
@@ -40,7 +51,7 @@
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           data-day={day_number}
           data-selected={day_number in attendee.available_days && "true"}
-          class="data-[selected='true']:bg-green-400"
+          class="transition-colors data-[selected='true']:bg-green-400"
         >
         </td>
       </tr>

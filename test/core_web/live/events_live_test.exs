@@ -2,37 +2,63 @@ defmodule CoreWeb.EventsLiveViewTest do
   use CoreWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   import Core.EventsFixtures
-  alias Core.Events
 
   setup do
     event = event_fixture()
     [event: event]
   end
 
-  test "receives pubsub event when new attendee joins and updates their days", %{
-    conn: conn,
-    event: event
-  } do
-    {:ok, view, _html} = live(conn, "/events?event_id=#{event.id}")
+  test "Two users see their mutual interactions", %{conn: conn, event: event} do
+    # User 1 joins and enters name
+    {:ok, view_a, _html_a} = live(conn, "/events?event_id=#{event.id}")
+    form(view_a, "#join_form", %{"name" => "John"}) |> render_submit()
+    assert has_element?(view_a, "tr > td", "You (John)")
 
-    new_attendee = attendee_fixture(%{browser_id: "some browser id", event_id: event.id})
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{event.id}", %{new_attendee: new_attendee})
+    # User 2 joins and enters name
+    {:ok, view_b, _html_a} = live(conn, "/events?event_id=#{event.id}")
+    form(view_b, "#join_form", %{"name" => "Matt"}) |> render_submit()
+    assert has_element?(view_b, "tr > td", "You (Matt)")
+    assert has_element?(view_b, "tr > td", "John")
+    assert has_element?(view_a, "tr > td", "Matt")
 
-    assert has_element?(view, "tr", "You")
-    assert has_element?(view, "tr[data-attendee='#{new_attendee.id}']")
+    # User 1 chooses days
+    element(view_a, "tbody > tr:first-child > td[data-day='1']") |> render_click()
+    element(view_a, "tbody > tr:first-child > td[data-day='2']") |> render_click()
+    element(view_a, "tbody > tr:first-child > td[data-day='6']") |> render_click()
 
-    available_days = [1, 2]
-    updated_attendee = Events.update_attendee!(new_attendee, %{available_days: available_days})
+    # User 2 chooses days
+    element(view_b, "tbody > tr:first-child > td[data-day='0']") |> render_click()
+    element(view_b, "tbody > tr:first-child > td[data-day='2']") |> render_click()
+    element(view_b, "tbody > tr:first-child > td[data-day='4']") |> render_click()
 
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{event.id}", %{
-      updated_attendee: updated_attendee
-    })
+    assert has_element?(
+             view_a,
+             "tbody > tr:nth-child(2) > td[data-day='0'][data-selected='true']"
+           )
 
-    for day_number <- available_days do
-      assert has_element?(
-               view,
-               "tr[data-attendee='#{updated_attendee.id}'] > td[data-day='#{day_number}'][data-selected='true']"
-             )
-    end
+    assert has_element?(
+             view_a,
+             "tbody > tr:nth-child(2) > td[data-day='2'][data-selected='true']"
+           )
+
+    assert has_element?(
+             view_a,
+             "tbody > tr:nth-child(2) > td[data-day='4'][data-selected='true']"
+           )
+
+    assert has_element?(
+             view_b,
+             "tbody > tr:nth-child(2) > td[data-day='1'][data-selected='true']"
+           )
+
+    assert has_element?(
+             view_b,
+             "tbody > tr:nth-child(2) > td[data-day='2'][data-selected='true']"
+           )
+
+    assert has_element?(
+             view_b,
+             "tbody > tr:nth-child(2) > td[data-day='6'][data-selected='true']"
+           )
   end
 end
