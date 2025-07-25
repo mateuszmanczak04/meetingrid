@@ -12,72 +12,37 @@
   <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
     <thead>
       <tr>
-        <th class="bg-gray-100">Attendee</th>
-        <th class="bg-gray-100">Mon</th>
-        <th class="bg-gray-100">Tue</th>
-        <th class="bg-gray-100">Wed</th>
-        <th class="bg-gray-100">Thu</th>
-        <th class="bg-gray-100">Fri</th>
-        <th class="bg-gray-100">Sat</th>
-        <th class="bg-gray-100">Sun</th>
+        <th
+          :for={text <- ["Attendee", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
+          class="bg-gray-100"
+        >
+          {text}
+        </th>
       </tr>
     </thead>
     <tbody>
-      <tr>
+      <tr data-attendee={to_string(@current_attendee.id)}>
         <td>You</td>
         <td
-          class={if 0 in @current_attendee.available_days, do: "bg-green-400"}
+          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           phx-click="choose_day"
-          phx-value-day_number={0}
-        >
-        </td>
-        <td
-          class={if 1 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={1}
-        >
-        </td>
-        <td
-          class={if 2 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={2}
-        >
-        </td>
-        <td
-          class={if 3 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={3}
-        >
-        </td>
-        <td
-          class={if 4 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={4}
-        >
-        </td>
-        <td
-          class={if 5 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={5}
-        >
-        </td>
-        <td
-          class={if 6 in @current_attendee.available_days, do: "bg-green-400"}
-          phx-click="choose_day"
-          phx-value-day_number={6}
+          data-day={day_number}
+          data-selected={day_number in @current_attendee.available_days && "true"}
+          phx-value-day_number={day_number}
+          class="data-[selected='true']:bg-green-400"
         >
         </td>
       </tr>
 
-      <tr :for={attendee <- @other_attendees}>
+      <tr :for={attendee <- @other_attendees} data-attendee={to_string(attendee.id)}>
         <td>{attendee.name}</td>
-        <th class={if 0 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 1 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 2 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 3 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 4 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 5 in attendee.available_days, do: "bg-green-400"}></th>
-        <th class={if 6 in attendee.available_days, do: "bg-green-400"}></th>
+        <td
+          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
+          data-day={day_number}
+          data-selected={day_number in attendee.available_days && "true"}
+          class="data-[selected='true']:bg-green-400"
+        >
+        </td>
       </tr>
     </tbody>
   </table>
