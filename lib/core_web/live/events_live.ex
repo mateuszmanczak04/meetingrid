@@ -133,7 +133,7 @@ defmodule CoreWeb.EventsLive do
 
     other_attendees =
       if current_attendee do
-        Enum.reject(event_attendees, &(&1.id == current_attendee.id))
+        Enum.reject(event_attendees, &(&1.browser_id == current_attendee.browser_id))
       else
         event_attendees
       end
