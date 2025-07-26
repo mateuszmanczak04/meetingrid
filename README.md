@@ -2,7 +2,7 @@
 
 ## Description
 
-Web application that helps people to find the best day possible for they to go out. It shows simple grid where days of the week are on the X-axis and attendees are on the Y-axis. 
+Web application that helps people to find the best day possible for they to go out. It shows simple grid where days of the week are on the X-axis and attendees are on the Y-axis.
 
 ## How to use
 
@@ -19,4 +19,3 @@ This app is fully made with Elixir+Phoenix. There are no plans for future change
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
-
