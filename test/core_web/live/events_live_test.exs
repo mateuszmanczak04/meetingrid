@@ -64,6 +64,10 @@ defmodule CoreWeb.EventsLiveViewTest do
              "tbody > tr:nth-child(2) > td[data-day='6'][data-selected='true']"
            )
 
+    # Assert matching day
+    assert has_element?(view_a, "thead > tr > th[data-day='2'][data-match='true']")
+    assert has_element?(view_b, "thead > tr > th[data-day='2'][data-match='true']")
+
     #  User 1 leaves
     element(view_a, "#leave_button") |> render_click()
     assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")

@@ -19,16 +19,22 @@
   <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Join</button>
 </form>
 
+{inspect(@matching_days)}
+
 <div :if={@event} class="mt-6">
   <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
     <thead>
       <tr>
-        <th
-          :for={text <- ["Attendee", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
-          class="bg-gray-100"
-        >
-          {text}
-        </th>
+        <th class="bg-gray-100">Attendee</th>
+        <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
+          <th
+            data-day={index}
+            data-match={index in @matching_days && "true"}
+            class="bg-gray-100 data-[match='true']:bg-green-200"
+          >
+            {text}
+          </th>
+        <% end %>
       </tr>
     </thead>
     <tbody>
