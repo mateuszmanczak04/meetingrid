@@ -66,8 +66,16 @@
     There are no attendees yet
   </p>
 
-  <div :if={@current_attendee} class="mt-6 flex justify-end">
+  <div class="mt-6 flex justify-end gap-x-2">
     <button
+      phx-hook="CopyToClipboard"
+      id="share_button"
+      class="bg-gray-100 text-gray-600 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+    >
+      Share
+    </button>
+    <button
+      :if={@current_attendee}
       phx-click="leave"
       id="leave_button"
       class="bg-red-100 text-red-600 px-3 py-2 rounded-md hover:bg-red-200 transition-colors cursor-pointer"

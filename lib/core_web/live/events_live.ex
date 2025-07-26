@@ -90,6 +90,16 @@ defmodule CoreWeb.EventsLive do
   end
 
   @impl true
+  def handle_event("share", _params, socket) do
+    {:noreply,
+     put_flash(
+       socket,
+       :info,
+       "URL has been copied to the clipboard. You can now send it to your friend :)"
+     )}
+  end
+
+  @impl true
   def handle_event("leave", _params, socket) do
     attendee = socket.assigns.current_attendee
     Events.delete_attendee!(attendee)
