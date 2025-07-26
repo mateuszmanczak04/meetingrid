@@ -15,3 +15,8 @@ Web application that helps people to find the best day possible for they to go o
 ## Tech stack
 
 This app is fully made with Elixir+Phoenix. There are no plans for future changes like adding React on the frontend because I don't expect it to have any advanced client-side logic.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
