@@ -134,13 +134,23 @@ defmodule CoreWeb.EventsLive do
 
   defp assign_matching_days(socket) do
     matching_days =
-      Enum.filter(0..6, fn day_number ->
-        Enum.concat(socket.assigns.other_attendees, [socket.assigns.current_attendee])
-        |> Enum.reject(&is_nil(&1))
-        |> Enum.all?(&(day_number in &1.available_days))
-      end)
+      socket.assigns
+      |> Map.take([:other_attendees, :current_attendee])
+      |> Map.values()
+      |> List.flatten()
+      |> Enum.reject(&is_nil/1)
+      |> case do
+        [] -> []
+        attendees -> find_matching_days(attendees)
+      end
 
     assign(socket, :matching_days, matching_days)
+  end
+
+  defp find_matching_days(attendees) do
+    Enum.filter(0..6, fn day ->
+      Enum.all?(attendees, &(day in &1.available_days))
+    end)
   end
 
   defp toggle_available_day(available_days, day_number) do
