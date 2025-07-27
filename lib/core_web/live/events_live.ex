@@ -59,6 +59,11 @@ defmodule CoreWeb.EventsLive do
   end
 
   @impl true
+  def handle_info(%{event: event}, socket) do
+    {:noreply, assign(socket, :event, event)}
+  end
+
+  @impl true
   def handle_event("join", %{"name" => name}, socket) do
     attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
 
@@ -138,11 +143,22 @@ defmodule CoreWeb.EventsLive do
       Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
         updated_attendee: attendee
       })
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
     end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("update_event", %{"title" => title}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      event = Events.update_event!(socket.assigns.event, %{title: title})
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        event: event
+      })
+    end
+
+    {:noreply, socket}
   end
 
   defp subscribe_to_events(socket) do

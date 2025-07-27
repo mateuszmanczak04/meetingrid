@@ -15,6 +15,12 @@ defmodule Core.Events do
     |> Repo.insert!()
   end
 
+  def update_event!(%Event{} = event, attrs) do
+    event
+    |> Event.changeset(attrs)
+    |> Repo.update!()
+  end
+
   # ATTENDEES
 
   def get_attendee_by(clauses), do: Repo.get_by(Attendee, clauses)

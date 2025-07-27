@@ -1,5 +1,23 @@
-<h1 class="font-bold text-4xl">Meetingrid</h1>
+<h1 :if={@event.title} class="font-bold text-4xl">{@event.title}</h1>
 <p>Choose the common day that you and your friends can meet together!</p>
+
+<form
+  :if={@current_attendee && @current_attendee.role == :admin}
+  id="update_event_form"
+  phx-submit="update_event"
+  class="border rounded-xl p-4 max-w-xs grid mt-4"
+>
+  <label for="join_input">Change event title</label>
+  <input
+    class="mt-1 px-3 py-2 rounded-md border-gray-300"
+    id="event_title_input"
+    type="text"
+    required
+    name="title"
+    placeholder="Meetup at the bar"
+  />
+  <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Save</button>
+</form>
 
 <form
   :if={!@current_attendee}

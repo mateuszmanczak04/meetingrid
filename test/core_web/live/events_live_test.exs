@@ -4,7 +4,7 @@ defmodule CoreWeb.EventsLiveViewTest do
   import Core.EventsFixtures
 
   setup do
-    event = event_fixture()
+    event = event_fixture(%{title: "Evening bar"})
     [event: event]
   end
 
@@ -74,10 +74,17 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert has_element?(view_a, "tbody > tr:nth-child(2) > td > button", "Remove admin")
     assert has_element?(view_b, "tbody > tr:nth-child(2) > td > button", "Remove admin")
 
+    # Update event's title
+    assert has_element?(view_a, "h1", "Evening bar")
+    assert has_element?(view_b, "h1", "Evening bar")
+    form(view_a, "#update_event_form", %{"title" => "Updated title"}) |> render_submit()
+    assert has_element?(view_a, "h1", "Updated title")
+    assert has_element?(view_b, "h1", "Updated title")
+
     #  User 1 leaves
     element(view_a, "#leave_button") |> render_click()
     assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")
     assert has_element?(view_a, "#join_form")
-    assert not has_element?(view_a, "tr > td", "#{user_a_name}")
+    assert not has_element?(view_b, "tr > td", "#{user_a_name}")
   end
 end
