@@ -23,6 +23,7 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert has_element?(view_b, "tr > td", "You (#{user_b_name})")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")
     assert has_element?(view_a, "tr > td", "#{user_b_name}")
+    assert has_element?(view_a, "tbody > tr:nth-child(2) > td > button", "Add admin")
 
     # User 1 chooses days
     element(view_a, "tbody > tr:first-child > td[data-day='1']") |> render_click()
@@ -67,6 +68,11 @@ defmodule CoreWeb.EventsLiveViewTest do
     # Assert matching day
     assert has_element?(view_a, "thead > tr > th[data-day='2'][data-match='true']")
     assert has_element?(view_b, "thead > tr > th[data-day='2'][data-match='true']")
+
+    # Make User 2 admin
+    element(view_a, "tbody > tr:nth-child(2) > td > button", "Add admin") |> render_click()
+    assert has_element?(view_a, "tbody > tr:nth-child(2) > td > button", "Remove admin")
+    assert has_element?(view_b, "tbody > tr:nth-child(2) > td > button", "Remove admin")
 
     #  User 1 leaves
     element(view_a, "#leave_button") |> render_click()

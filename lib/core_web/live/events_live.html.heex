@@ -23,7 +23,7 @@
   <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
     <thead>
       <tr>
-        <th class="bg-gray-100">Attendee</th>
+        <th class="bg-gray-100 w-40">Attendee</th>
         <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
           <th
             data-day={index}
@@ -33,11 +33,17 @@
             {text}
           </th>
         <% end %>
+        <th :if={@current_attendee && @current_attendee.role == :admin} class="bg-gray-100 w-32">
+          Options
+        </th>
       </tr>
     </thead>
     <tbody>
       <tr :if={@current_attendee} data-attendee={to_string(@current_attendee.browser_id)}>
-        <td>You ({@current_attendee.name})</td>
+        <td class="text-nowrap truncate overflow-hidden">
+          You ({@current_attendee.name})
+          <span :if={@current_attendee.role == :admin}>(Organizer)</span>
+        </td>
         <td
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           phx-click="choose_day"
@@ -47,16 +53,40 @@
           class="cursor-pointer transition-colors hover:bg-green-300 data-[selected='true']:bg-green-400"
         >
         </td>
+        <td :if={@current_attendee.role == :admin}></td>
       </tr>
 
       <tr :for={attendee <- @other_attendees} data-attendee={to_string(attendee.browser_id)}>
-        <td>{attendee.name}</td>
+        <td class="text-nowrap truncate overflow-hidden">
+          {attendee.name}
+          <span :if={attendee.role == :admin}>(Organizer)</span>
+        </td>
         <td
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           data-day={day_number}
           data-selected={day_number in attendee.available_days && "true"}
           class="transition-colors data-[selected='true']:bg-green-400"
         >
+        </td>
+        <td :if={@current_attendee && @current_attendee.role == :admin}>
+          <button
+            :if={attendee.role != :admin}
+            phx-click="change_role"
+            phx-value-role="admin"
+            phx-value-browser_id={attendee.browser_id}
+            id={"change_role_#{attendee.browser_id}"}
+          >
+            Add admin
+          </button>
+          <button
+            :if={attendee.role == :admin}
+            phx-click="change_role"
+            phx-value-role="user"
+            phx-value-browser_id={attendee.browser_id}
+            id={"change_role_#{attendee.browser_id}"}
+          >
+            Remove admin
+          </button>
         </td>
       </tr>
     </tbody>

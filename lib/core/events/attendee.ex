@@ -8,6 +8,7 @@ defmodule Core.Events.Attendee do
     field :name, :string, default: ""
     field :browser_id, :string, primary_key: true
     field :available_days, {:array, :integer}, default: []
+    field :role, Ecto.Enum, values: [:user, :admin], default: :user
     belongs_to :event, Core.Events.Event, primary_key: true
 
     timestamps(type: :utc_datetime)
@@ -15,7 +16,7 @@ defmodule Core.Events.Attendee do
 
   def changeset(attendee, attrs) do
     attendee
-    |> cast(attrs, [:event_id, :name, :available_days, :browser_id])
+    |> cast(attrs, [:event_id, :name, :available_days, :browser_id, :role])
     |> validate_required([:event_id, :browser_id])
   end
 end

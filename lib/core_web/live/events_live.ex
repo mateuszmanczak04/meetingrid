@@ -60,11 +60,14 @@ defmodule CoreWeb.EventsLive do
 
   @impl true
   def handle_event("join", %{"name" => name}, socket) do
+    attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
+
     attendee =
       Events.create_attendee!(%{
         event_id: socket.assigns.event.id,
         browser_id: socket.assigns.browser_id,
-        name: name
+        name: name,
+        role: if(Enum.empty?(attendees), do: :admin, else: :user)
       })
 
     Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
@@ -79,8 +82,7 @@ defmodule CoreWeb.EventsLive do
     attendee = socket.assigns.current_attendee
     available_days = toggle_available_day(attendee.available_days, String.to_integer(day_number))
 
-    attendee =
-      Events.update_attendee!(attendee, %{available_days: available_days})
+    attendee = Events.update_attendee!(attendee, %{available_days: available_days})
 
     Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
       updated_attendee: attendee
@@ -109,6 +111,20 @@ defmodule CoreWeb.EventsLive do
     })
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("change_role", %{"role" => role, "browser_id" => browser_id}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      attendee = Enum.find(socket.assigns.other_attendees, &(&1.browser_id == browser_id))
+      attendee = Events.update_attendee!(attendee, %{role: role})
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        updated_attendee: attendee
+      })
+
+      {:noreply, socket}
+    end
   end
 
   defp subscribe_to_events(socket) do
