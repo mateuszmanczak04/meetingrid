@@ -114,6 +114,22 @@ defmodule CoreWeb.EventsLive do
   end
 
   @impl true
+  def handle_event("kick", %{"browser_id" => browser_id}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      attendee = Enum.find(socket.assigns.other_attendees, &(&1.browser_id == browser_id))
+      Events.delete_attendee!(attendee)
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        deleted_attendee: attendee
+      })
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event("change_role", %{"role" => role, "browser_id" => browser_id}, socket) do
     if socket.assigns.current_attendee.role == :admin do
       attendee = Enum.find(socket.assigns.other_attendees, &(&1.browser_id == browser_id))
@@ -123,6 +139,8 @@ defmodule CoreWeb.EventsLive do
         updated_attendee: attendee
       })
 
+      {:noreply, socket}
+    else
       {:noreply, socket}
     end
   end

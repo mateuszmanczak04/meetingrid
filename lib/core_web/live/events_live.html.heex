@@ -70,22 +70,20 @@
         </td>
         <td :if={@current_attendee && @current_attendee.role == :admin}>
           <button
-            :if={attendee.role != :admin}
-            phx-click="change_role"
-            phx-value-role="admin"
+            class="block bg-red-100 text-red-600 rounded-md px-1"
+            phx-click="kick"
             phx-value-browser_id={attendee.browser_id}
-            id={"change_role_#{attendee.browser_id}"}
           >
-            Add admin
+            Kick
           </button>
           <button
-            :if={attendee.role == :admin}
+            class="block"
             phx-click="change_role"
-            phx-value-role="user"
+            phx-value-role={if attendee.role == :admin, do: :user, else: :admin}
             phx-value-browser_id={attendee.browser_id}
             id={"change_role_#{attendee.browser_id}"}
           >
-            Remove admin
+            {if attendee.role == :admin, do: "Remove admin", else: "Add admin"}
           </button>
         </td>
       </tr>
