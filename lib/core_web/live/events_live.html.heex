@@ -20,19 +20,25 @@
 </form>
 
 <form
-  :if={!@current_attendee}
-  id="join_form"
-  phx-submit="join"
+  id={if @current_attendee, do: "attendee_form", else: "join_form"}
+  phx-submit={if @current_attendee, do: "update_attendee", else: "join"}
   class="border rounded-xl p-4 max-w-xs grid mt-4"
 >
-  <label for="join_input">Please choose your name </label>
+  <label for="attendee_name">
+    <%= if @current_attendee do %>
+      Update your name
+    <% else %>
+      Please choose your name
+    <% end %>
+  </label>
   <input
     class="mt-1 px-3 py-2 rounded-md border-gray-300"
-    id="join_input"
+    id="attendee_name"
     type="text"
     required
     name="name"
     placeholder="John"
+    value={@current_attendee && @current_attendee.name}
   />
   <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Join</button>
 </form>

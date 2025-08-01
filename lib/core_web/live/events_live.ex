@@ -83,6 +83,17 @@ defmodule CoreWeb.EventsLive do
   end
 
   @impl true
+  def handle_event("update_attendee", %{"name" => name}, socket) do
+    attendee = Events.update_attendee!(socket.assigns.current_attendee, %{name: name})
+
+    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+      updated_attendee: attendee
+    })
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("choose_day", %{"day_number" => day_number}, socket) do
     attendee = socket.assigns.current_attendee
     available_days = toggle_available_day(attendee.available_days, String.to_integer(day_number))

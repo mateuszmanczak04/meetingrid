@@ -81,6 +81,12 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert has_element?(view_a, "h1", "Updated title")
     assert has_element?(view_b, "h1", "Updated title")
 
+    # Update User 1 name
+    new_user_a_name = "Chris"
+    form(view_a, "#attendee_form", %{"name" => "#{new_user_a_name}"}) |> render_submit()
+    assert has_element?(view_a, "tr > td", "You (#{new_user_a_name})")
+    assert has_element?(view_b, "tr > td", "#{new_user_a_name}")
+
     #  User 1 leaves
     element(view_a, "#leave_button") |> render_click()
     assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")
