@@ -4,6 +4,7 @@ defmodule Core.Events.Event do
 
   schema "events" do
     field :title, :string, default: ""
+    field :password, :string, default: nil
     has_many :attendee, Core.Events.Attendee
 
     timestamps(type: :utc_datetime)
@@ -11,7 +12,18 @@ defmodule Core.Events.Event do
 
   def changeset(event, attrs) do
     event
-    |> cast(attrs, [:title])
+    |> cast(attrs, [:title, :password])
     |> validate_required([])
+    |> hash_password()
+  end
+
+  defp hash_password(changeset) do
+    password = get_change(changeset, :password)
+
+    if password && changeset.valid? do
+      put_change(changeset, :password, Argon2.hash_pwd_salt(password))
+    else
+      changeset
+    end
   end
 end

@@ -64,22 +64,49 @@ defmodule CoreWeb.EventsLive do
   end
 
   @impl true
-  def handle_event("join", %{"name" => name}, socket) do
-    attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
+  def handle_event("join", %{"name" => name} = params, socket) do
+    case {socket.assigns.event.password,
+          params["password"] &&
+            Argon2.verify_pass(params["password"], socket.assigns.event.password)} do
+      {password, verified} when is_nil(password) or (is_binary(password) and verified) ->
+        attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
 
-    attendee =
-      Events.create_attendee!(%{
-        event_id: socket.assigns.event.id,
-        browser_id: socket.assigns.browser_id,
-        name: name,
-        role: if(Enum.empty?(attendees), do: :admin, else: :user)
+        attendee =
+          Events.create_attendee!(%{
+            event_id: socket.assigns.event.id,
+            browser_id: socket.assigns.browser_id,
+            name: name,
+            role:
+              if(Enum.empty?(attendees) && is_nil(socket.assigns.event.password),
+                do: :admin,
+                else: :user
+              )
+          })
+
+        Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+          new_attendee: attendee
+        })
+
+        {:noreply, socket}
+
+      {password, false} when is_binary(password) ->
+        {:noreply, put_flash(socket, :error, "Wrong password")}
+    end
+  end
+
+  @impl true
+  def handle_event("update_event_password", %{"password" => password}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      event = Events.update_event!(socket.assigns.event, %{password: password})
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        event: event
       })
 
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-      new_attendee: attendee
-    })
-
-    {:noreply, socket}
+      {:noreply, socket |> put_flash(:info, "Successfully updated event password")}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true

@@ -92,5 +92,25 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")
     assert has_element?(view_a, "#join_form")
     assert not has_element?(view_b, "tr > td", "#{user_a_name}")
+
+    # User 2 sets event password
+    event_password = "abcdef"
+    form(view_b, "#event_password_form", %{"password" => event_password}) |> render_submit()
+    assert not has_element?(view_a, "table")
+    assert has_element?(view_b, "#flash-info > p", "Successfully updated event password")
+
+    # User 1 joins with wrong password
+    form(view_a, "#join_form", %{"name" => user_a_name, "password" => "wrong!"})
+    |> render_submit()
+
+    assert not has_element?(view_a, "table")
+    assert has_element?(view_a, "#flash-error > p", "Wrong password")
+
+    # User 1 joins with correct password
+    form(view_a, "#join_form", %{"name" => user_a_name, "password" => event_password})
+    |> render_submit()
+
+    assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
+    assert has_element?(view_b, "tr > td", "#{user_a_name}")
   end
 end

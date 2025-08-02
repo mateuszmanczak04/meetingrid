@@ -1,49 +1,113 @@
 <h1 :if={@event.title} class="font-bold text-4xl">{@event.title}</h1>
 <p>Choose the common day that you and your friends can meet together!</p>
 
-<form
-  :if={@current_attendee && @current_attendee.role == :admin}
-  id="update_event_form"
-  phx-submit="update_event"
-  class="border rounded-xl p-4 max-w-xs grid mt-4"
->
-  <label for="join_input">Change event title</label>
-  <input
-    class="mt-1 px-3 py-2 rounded-md border-gray-300"
-    id="event_title_input"
-    type="text"
-    required
-    name="title"
-    placeholder="Meetup at the bar"
-  />
-  <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Save</button>
-</form>
+<div class="grid grid-cols-3 mt-4 gap-4">
+  <form
+    :if={@current_attendee && @current_attendee.role == :admin}
+    id="update_event_form"
+    phx-submit="update_event"
+    class="border rounded-xl p-4 grid"
+  >
+    <label for="join_input">Change event title</label>
+    <input
+      class="mt-1 px-3 py-2 rounded-md border-gray-300"
+      id="event_title_input"
+      type="text"
+      required
+      name="title"
+      placeholder="Meetup at the bar"
+      value={@event && @event.title}
+    />
+    <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
+      Save event title
+    </button>
+  </form>
 
-<form
-  id={if @current_attendee, do: "attendee_form", else: "join_form"}
-  phx-submit={if @current_attendee, do: "update_attendee", else: "join"}
-  class="border rounded-xl p-4 max-w-xs grid mt-4"
->
-  <label for="attendee_name">
-    <%= if @current_attendee do %>
-      Update your name
-    <% else %>
-      Please choose your name
-    <% end %>
-  </label>
-  <input
-    class="mt-1 px-3 py-2 rounded-md border-gray-300"
-    id="attendee_name"
-    type="text"
-    required
-    name="name"
-    placeholder="John"
-    value={@current_attendee && @current_attendee.name}
-  />
-  <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">Join</button>
-</form>
+  <%= if @current_attendee do %>
+    <form
+      :if={@current_attendee}
+      id="attendee_form"
+      phx-submit="update_attendee"
+      class="border rounded-xl p-4 grid"
+    >
+      <label for="attendee_name">
+        Update your name
+      </label>
+      <input
+        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+        id="attendee_name"
+        type="text"
+        required
+        name="name"
+        placeholder="John"
+        value={@current_attendee.name}
+      />
+      <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
+        Save
+      </button>
+    </form>
+  <% else %>
+    <form
+      :if={!@current_attendee}
+      id="join_form"
+      phx-submit="join"
+      class="border rounded-xl p-4 grid"
+    >
+      <h2 class="text-xl font-bold">Join event</h2>
+      <label for="attendee_name">
+        Your name
+      </label>
+      <input
+        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+        type="text"
+        id="attendee_name"
+        required
+        name="name"
+        placeholder="John"
+      />
 
-<div :if={@event} class="mt-6">
+      <label :if={@event.password} for="join_event_password">
+        Event password
+      </label>
+      <input
+        :if={@event.password}
+        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+        type="password"
+        id="join_event_password"
+        required
+        name="password"
+        placeholder="••••••••"
+      />
+      <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
+        Join event
+      </button>
+    </form>
+  <% end %>
+
+  <form
+    :if={@current_attendee && @current_attendee.role == :admin}
+    id="event_password_form"
+    phx-submit="update_event_password"
+    class="border rounded-xl p-4 grid"
+  >
+    <label for="event_password">
+      Change event password
+      <small class="block text-gray-500">Leave empty input to remove password</small>
+    </label>
+    <input
+      class="mt-1 px-3 py-2 rounded-md border-gray-300"
+      id="event_password"
+      type="password"
+      name="password"
+      placeholder="••••••••"
+    />
+    <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
+      Save event password
+    </button>
+  </form>
+</div>
+
+<div :if={!@event.password || (@event.password && @current_attendee)} class="mt-6">
   <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
     <thead>
       <tr>
