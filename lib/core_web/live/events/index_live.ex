@@ -1,6 +1,7 @@
 defmodule CoreWeb.Events.IndexLive do
   use CoreWeb, :live_view
   alias Core.Events
+  import CoreWeb.CoreComponents
 
   @impl true
   def mount(_params, %{"browser_id" => browser_id}, socket) do
@@ -16,7 +17,7 @@ defmodule CoreWeb.Events.IndexLive do
 
   @impl true
   def handle_event("create_event", _params, socket) do
-    event = Events.create_event!()
+    event = Events.create_event!(%{title: "Untitled"})
     {:noreply, push_navigate(socket, to: ~p"/events/#{event.id}", replace: true)}
   end
 end

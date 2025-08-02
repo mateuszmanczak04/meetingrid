@@ -223,6 +223,7 @@ defmodule CoreWeb.CoreComponents do
   attr :type, :string, default: nil
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
+  attr :variant, :string, values: ["primary", "secondary", "danger"], default: "primary"
 
   slot :inner_block, required: true
 
@@ -231,8 +232,10 @@ defmodule CoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "phx-submit-loading:opacity-75 rounded-lg hover:opacity-90 transition-oapcity py-2 px-3 cursor-pointer text-sm font-medium h-10",
+        @variant == "primary" && "bg-primary",
+        @variant == "secondary" && "bg-gray-100 text-gray-700",
+        @variant == "danger" && "bg-red-100 text-red-700",
         @class
       ]}
       {@rest}
@@ -542,30 +545,6 @@ defmodule CoreWeb.CoreComponents do
           <dd class="text-zinc-700">{render_slot(item)}</dd>
         </div>
       </dl>
-    </div>
-    """
-  end
-
-  @doc """
-  Renders a back navigation link.
-
-  ## Examples
-
-      <.back navigate={~p"/posts"}>Back to posts</.back>
-  """
-  attr :navigate, :any, required: true
-  slot :inner_block, required: true
-
-  def back(assigns) do
-    ~H"""
-    <div class="mt-16">
-      <.link
-        navigate={@navigate}
-        class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
-      >
-        <.icon name="hero-arrow-left-solid" class="h-3 w-3" />
-        {render_slot(@inner_block)}
-      </.link>
     </div>
     """
   end

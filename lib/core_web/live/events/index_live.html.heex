@@ -1,30 +1,30 @@
-<h1 class="text-4xl font-bold">Events you attend</h1>
+<h1 class="text-4xl font-bold">Your Events</h1>
 
-<button
-  class="mt-4 px-2 py-1 rounded-md bg-gray-100 border border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors"
-  id="create_event_button"
-  phx-click="create_event"
->
-  Create new event
-</button>
-
-<section class="grid grid-cols-2 gap-4 mt-4">
+<section class="grid grid-cols-3 gap-4 mt-4">
   <%= for event <- @events do %>
     <article id={"event-#{event.id}"} class="p-4 rounded-xl border flex flex-col">
       <h2 class="font-semibold text-lg">
         {if event.title != "", do: event.title, else: "Untitled"}
       </h2>
 
-      <ul id={"event-#{event.id}-attendees"} class="text-gray-500 list-disc list-inside mt-2">
+      <ul
+        id={"event-#{event.id}-attendees"}
+        class="text-muted-foreground list-disc list-inside mt-2"
+      >
         <li :for={attendee <- event.attendees}>{attendee.name}</li>
       </ul>
 
-      <.link
-        navigate={~p"/events/#{event.id}"}
-        class="mt-auto ml-auto bg-gray-100 hover:bg-gray-200 border border-gray-300 cursor-pointer transition-colors px-2 py-1 rounded-md"
-      >
-        Go to event
+      <.link navigate={~p"/events/#{event.id}"} class="w-fit ml-auto mt-auto">
+        <.button variant="secondary">
+          Go to event <.icon name="hero-chevron-right" class="size-4 -translate-y-px" />
+        </.button>
       </.link>
     </article>
   <% end %>
 </section>
+
+<div class="w-full flex justify-end mt-4">
+  <.button id="create_event_button" phx-click="create_event">
+    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new event
+  </.button>
+</div>

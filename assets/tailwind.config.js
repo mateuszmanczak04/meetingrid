@@ -2,6 +2,7 @@
 // https://tailwindcss.com/docs/configuration
 
 const plugin = require('tailwindcss/plugin');
+const colors = require('tailwindcss/colors');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,7 +11,8 @@ module.exports = {
 	theme: {
 		extend: {
 			colors: {
-				brand: '#FD4F00',
+				primary: '#8BD7D2',
+				'muted-foreground': colors.gray['500'],
 			},
 		},
 	},

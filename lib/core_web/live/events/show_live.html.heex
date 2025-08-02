@@ -1,10 +1,23 @@
-<.link
-  navigate={~p"/events"}
-  class="mt-auto ml-auto bg-gray-100 hover:bg-gray-200 border border-gray-300 cursor-pointer transition-colors px-2 py-1 rounded-md"
->
-  Back to events list
-</.link>
-<h1 :if={@event.title} class="font-bold text-4xl mt-2">{@event.title}</h1>
+<header class="flex gap-x-2">
+  <.link navigate={~p"/events"}>
+    <.button variant="secondary">
+      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to events list
+    </.button>
+  </.link>
+  <.button
+    :if={@current_attendee}
+    variant="danger"
+    phx-click="leave"
+    id="leave_button"
+    class="ml-auto"
+  >
+    <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave
+  </.button>
+  <.button phx-hook="CopyToClipboard" id="share_button" class={!@current_attendee && "ml-auto"}>
+    <.icon name="hero-share" class="size-4 -translate-y-px" /> Share
+  </.button>
+</header>
+<h1 :if={@event.title} class="font-bold text-4xl mt-4">{@event.title}</h1>
 <p>Choose the common day that you and your friends can meet together!</p>
 
 <div class="grid grid-cols-3 mt-4 gap-4">
@@ -15,8 +28,8 @@
     class="border rounded-xl p-4 grid"
   >
     <label for="join_input">Change event title</label>
-    <input
-      class="mt-1 px-3 py-2 rounded-md border-gray-300"
+    <.input
+      class="mt-1"
       id="event_title_input"
       type="text"
       required
@@ -24,9 +37,7 @@
       placeholder="Meetup at the bar"
       value={@event && @event.title}
     />
-    <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
-      Save event title
-    </button>
+    <.button class="mt-2" type="submit">Save event title</.button>
   </form>
 
   <%= if @current_attendee do %>
@@ -36,11 +47,9 @@
       phx-submit="update_attendee"
       class="border rounded-xl p-4 grid"
     >
-      <label for="attendee_name">
-        Update your name
-      </label>
-      <input
-        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+      <label for="attendee_name">Update your name</label>
+      <.input
+        class="mt-1"
         id="attendee_name"
         type="text"
         required
@@ -48,9 +57,7 @@
         placeholder="John"
         value={@current_attendee.name}
       />
-      <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
-        Save
-      </button>
+      <.button class="mt-2" type="submit">Save</.button>
     </form>
   <% else %>
     <form
@@ -60,33 +67,29 @@
       class="border rounded-xl p-4 grid"
     >
       <h2 class="text-xl font-bold">Join event</h2>
-      <label for="attendee_name">
-        Your name
-      </label>
-      <input
-        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+      <label for="attendee_name">Your name</label>
+      <.input
+        class="mt-1"
         type="text"
         id="attendee_name"
         required
         name="name"
         placeholder="John"
+        value=""
       />
 
-      <label :if={@event.password} for="join_event_password">
-        Event password
-      </label>
-      <input
+      <label :if={@event.password} for="join_event_password">Event password</label>
+      <.input
         :if={@event.password}
-        class="mt-1 px-3 py-2 rounded-md border-gray-300"
+        class="mt-1"
         type="password"
         id="join_event_password"
         required
         name="password"
         placeholder="••••••••"
+        value=""
       />
-      <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
-        Join event
-      </button>
+      <.button class="mt-2" type="submit">Join event</.button>
     </form>
   <% end %>
 
@@ -98,18 +101,17 @@
   >
     <label for="event_password">
       Change event password
-      <small class="block text-gray-500">Leave empty input to remove password</small>
+      <small class="block text-muted-foreground">Leave empty input to remove password</small>
     </label>
-    <input
-      class="mt-1 px-3 py-2 rounded-md border-gray-300"
+    <.input
+      class="mt-1"
       id="event_password"
       type="password"
       name="password"
       placeholder="••••••••"
+      value=""
     />
-    <button class="bg-blue-500 text-white px-3 py-2 rounded-md mt-2" type="submit">
-      Save event password
-    </button>
+    <.button class="mt-2" type="submit">Save event password</.button>
   </form>
 </div>
 
@@ -163,46 +165,27 @@
         >
         </td>
         <td :if={@current_attendee && @current_attendee.role == :admin}>
-          <button
-            class="block bg-red-100 text-red-600 rounded-md px-1"
-            phx-click="kick"
-            phx-value-browser_id={attendee.browser_id}
-          >
+          <.button variant="secondary" phx-click="kick" phx-value-browser_id={attendee.browser_id}>
             Kick
-          </button>
-          <button
-            class="block"
+          </.button>
+          <.button
+            variant="secondary"
             phx-click="change_role"
             phx-value-role={if attendee.role == :admin, do: :user, else: :admin}
             phx-value-browser_id={attendee.browser_id}
             id={"change_role_#{attendee.browser_id}"}
           >
             {if attendee.role == :admin, do: "Remove admin", else: "Add admin"}
-          </button>
+          </.button>
         </td>
       </tr>
     </tbody>
   </table>
 
-  <p :if={!@current_attendee && @other_attendees == []} class="text-gray-600 mt-4 text-center">
+  <p
+    :if={!@current_attendee && @other_attendees == []}
+    class="text-muted-foreground mt-4 text-center"
+  >
     There are no attendees yet
   </p>
-
-  <div class="mt-6 flex justify-end gap-x-2">
-    <button
-      phx-hook="CopyToClipboard"
-      id="share_button"
-      class="bg-gray-100 text-gray-600 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
-    >
-      Share
-    </button>
-    <button
-      :if={@current_attendee}
-      phx-click="leave"
-      id="leave_button"
-      class="bg-red-100 text-red-600 px-3 py-2 rounded-md hover:bg-red-200 transition-colors cursor-pointer"
-    >
-      Leave
-    </button>
-  </div>
 </div>
