@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for core on 2025-07-02T16:15:22+02:00
+# fly.toml app configuration file generated for meetingrid on 2025-08-02T20:46:29+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'core'
-primary_region = 'waw'
+app = 'meetingrid'
+primary_region = 'fra'
 kill_signal = 'SIGTERM'
 
 [build]
@@ -15,7 +15,7 @@ kill_signal = 'SIGTERM'
   max_machines = 1
 
 [env]
-  PHX_HOST = 'core.fly.dev'
+  PHX_HOST = 'meetingrid.fly.dev'
   PORT = '8080'
 
 [http_service]
