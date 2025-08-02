@@ -13,12 +13,12 @@ defmodule CoreWeb.EventsLiveViewTest do
     user_b_name = "Matt"
 
     # User 1 joins and enters name
-    {:ok, view_a, _html_a} = live(conn, "/events?event_id=#{event.id}")
+    {:ok, view_a, _html_a} = live(conn, "/events/#{event.id}")
     form(view_a, "#join_form", %{"name" => "#{user_a_name}"}) |> render_submit()
     assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
 
     # User 2 joins and enters name
-    {:ok, view_b, _html_a} = live(conn, "/events?event_id=#{event.id}")
+    {:ok, view_b, _html_a} = live(conn, "/events/#{event.id}")
     form(view_b, "#join_form", %{"name" => user_b_name}) |> render_submit()
     assert has_element?(view_b, "tr > td", "You (#{user_b_name})")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")

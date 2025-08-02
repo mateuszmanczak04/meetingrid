@@ -20,7 +20,8 @@ defmodule CoreWeb.Router do
 
     get "/", PageController, :home
 
-    live "/events", EventsLive
+    live "/events", Events.IndexLive
+    live "/events/:id", Events.ShowLive
   end
 
   # Other scopes may use custom stacks.

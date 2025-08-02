@@ -1,14 +1,14 @@
-defmodule CoreWeb.EventsLive do
+defmodule CoreWeb.Events.ShowLive do
   use CoreWeb, :live_view
   alias Core.Events
 
   @impl true
   def mount(_params, %{"browser_id" => browser_id}, socket) do
-    {:ok, socket |> assign(:browser_id, browser_id)}
+    {:ok, assign(socket, :browser_id, browser_id)}
   end
 
   @impl true
-  def handle_params(%{"event_id" => event_id}, _uri, socket) do
+  def handle_params(%{"id" => event_id}, _uri, socket) do
     event = Events.get_event(String.to_integer(event_id))
 
     if event do
@@ -21,14 +21,8 @@ defmodule CoreWeb.EventsLive do
        |> assign_other_attendees()
        |> assign_matching_days()}
     else
-      {:noreply, push_patch(socket, to: ~p"/")}
+      {:noreply, push_patch(socket, to: ~p"/events", replace: true)}
     end
-  end
-
-  @impl true
-  def handle_params(_params, _uri, socket) do
-    event = Events.create_event!()
-    {:noreply, push_patch(socket, to: ~p"/events/?event_id=#{event.id}", replace: true)}
   end
 
   @impl true
