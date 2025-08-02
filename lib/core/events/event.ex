@@ -5,7 +5,7 @@ defmodule Core.Events.Event do
   schema "events" do
     field :title, :string, default: ""
     field :password, :string, default: nil
-    has_many :attendee, Core.Events.Attendee
+    has_many :attendees, Core.Events.Attendee
 
     timestamps(type: :utc_datetime)
   end

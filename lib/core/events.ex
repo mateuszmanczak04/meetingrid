@@ -7,12 +7,16 @@ defmodule Core.Events do
 
   # EVENTS
 
-  def get_event(id), do: Repo.get(Event, id)
+  def get_event(id) do
+    Repo.get(Event, id)
+    |> Repo.preload(:attendees)
+  end
 
   def create_event!(attrs \\ %{}) do
     %Event{}
     |> Event.changeset(attrs)
     |> Repo.insert!()
+    |> Repo.preload(:attendees)
   end
 
   def update_event!(%Event{} = event, attrs) do

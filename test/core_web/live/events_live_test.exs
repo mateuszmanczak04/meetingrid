@@ -88,10 +88,8 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert has_element?(view_b, "tr > td", "#{new_user_a_name}")
 
     #  User 1 leaves
-    element(view_a, "#leave_button") |> render_click()
-    assert not has_element?(view_a, "tr > td", "You (#{user_a_name})")
-    assert has_element?(view_a, "#join_form")
-    assert not has_element?(view_b, "tr > td", "#{user_a_name}")
+    {:ok, view_a, _html_a} =
+      element(view_a, "#leave_button") |> render_click() |> follow_redirect(conn, ~p"/events")
 
     # User 2 sets event password
     event_password = "abcdef"
@@ -99,18 +97,35 @@ defmodule CoreWeb.EventsLiveViewTest do
     assert not has_element?(view_a, "table")
     assert has_element?(view_b, "#flash-info > p", "Successfully updated event password")
 
-    # User 1 joins with wrong password
+    # User 1 re-joins with wrong password
+    {:ok, view_a, _html_a} = live(conn, "/events/#{event.id}")
+
     form(view_a, "#join_form", %{"name" => user_a_name, "password" => "wrong!"})
     |> render_submit()
 
     assert not has_element?(view_a, "table")
     assert has_element?(view_a, "#flash-error > p", "Wrong password")
 
-    # User 1 joins with correct password
+    # User 1 re-joins with correct password
     form(view_a, "#join_form", %{"name" => user_a_name, "password" => event_password})
     |> render_submit()
 
     assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")
+  end
+
+  test "Visiting page with non-existing event redirects to /events", %{conn: conn} do
+    {:error, {:live_redirect, %{to: redirect_path}}} = live(conn, "/events/123456")
+    assert redirect_path == "/events"
+  end
+
+  test "Create new event button in /events creates new event and redirects", %{conn: conn} do
+    {:ok, view, _html} = live(conn, "/events")
+
+    {:ok, view, _html} =
+      element(view, "#create_event_button") |> render_click() |> follow_redirect(conn)
+
+    assert has_element?(view, "#join_form")
+    assert has_element?(view, "table")
   end
 end

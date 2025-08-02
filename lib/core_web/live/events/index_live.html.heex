@@ -1,0 +1,30 @@
+<h1 class="text-4xl font-bold">Events you attend</h1>
+
+<button
+  class="mt-4 px-2 py-1 rounded-md bg-gray-100 border border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors"
+  id="create_event_button"
+  phx-click="create_event"
+>
+  Create new event
+</button>
+
+<section class="grid grid-cols-2 gap-4 mt-4">
+  <%= for event <- @events do %>
+    <article id={"event-#{event.id}"} class="p-4 rounded-xl border flex flex-col">
+      <h2 class="font-semibold text-lg">
+        {if event.title != "", do: event.title, else: "Untitled"}
+      </h2>
+
+      <ul id={"event-#{event.id}-attendees"} class="text-gray-500 list-disc list-inside mt-2">
+        <li :for={attendee <- event.attendees}>{attendee.name}</li>
+      </ul>
+
+      <.link
+        navigate={~p"/events/#{event.id}"}
+        class="mt-auto ml-auto bg-gray-100 hover:bg-gray-200 border border-gray-300 cursor-pointer transition-colors px-2 py-1 rounded-md"
+      >
+        Go to event
+      </.link>
+    </article>
+  <% end %>
+</section>

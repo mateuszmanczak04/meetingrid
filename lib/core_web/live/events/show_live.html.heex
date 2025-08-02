@@ -1,4 +1,10 @@
-<h1 :if={@event.title} class="font-bold text-4xl">{@event.title}</h1>
+<.link
+  navigate={~p"/events"}
+  class="mt-auto ml-auto bg-gray-100 hover:bg-gray-200 border border-gray-300 cursor-pointer transition-colors px-2 py-1 rounded-md"
+>
+  Back to events list
+</.link>
+<h1 :if={@event.title} class="font-bold text-4xl mt-2">{@event.title}</h1>
 <p>Choose the common day that you and your friends can meet together!</p>
 
 <div class="grid grid-cols-3 mt-4 gap-4">

@@ -21,32 +21,15 @@ defmodule CoreWeb.Events.ShowLive do
        |> assign_other_attendees()
        |> assign_matching_days()}
     else
-      {:noreply, push_patch(socket, to: ~p"/events", replace: true)}
+      {:noreply, push_navigate(socket, to: ~p"/events", replace: true)}
     end
   end
 
   @impl true
-  def handle_info(%{new_attendee: _new_attendee}, socket) do
+  def handle_info(%{attendee: _attendee}, socket) do
     {:noreply,
      socket
-     |> assign_current_attendee()
-     |> assign_other_attendees()
-     |> assign_matching_days()}
-  end
-
-  @impl true
-  def handle_info(%{updated_attendee: _updated_attendee}, socket) do
-    {:noreply,
-     socket
-     |> assign_current_attendee()
-     |> assign_other_attendees()
-     |> assign_matching_days()}
-  end
-
-  @impl true
-  def handle_info(%{deleted_attendee: _deleted_attendee}, socket) do
-    {:noreply,
-     socket
+     |> refresh_event()
      |> assign_current_attendee()
      |> assign_other_attendees()
      |> assign_matching_days()}
@@ -63,22 +46,22 @@ defmodule CoreWeb.Events.ShowLive do
           params["password"] &&
             Argon2.verify_pass(params["password"], socket.assigns.event.password)} do
       {password, verified} when is_nil(password) or (is_binary(password) and verified) ->
-        attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
-
         attendee =
           Events.create_attendee!(%{
             event_id: socket.assigns.event.id,
             browser_id: socket.assigns.browser_id,
             name: name,
             role:
-              if(Enum.empty?(attendees) && is_nil(socket.assigns.event.password),
+              if(
+                Enum.empty?(socket.assigns.event.attendees) &&
+                  is_nil(socket.assigns.event.password),
                 do: :admin,
                 else: :user
               )
           })
 
         Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-          new_attendee: attendee
+          attendee: attendee
         })
 
         {:noreply, socket}
@@ -108,7 +91,7 @@ defmodule CoreWeb.Events.ShowLive do
     attendee = Events.update_attendee!(socket.assigns.current_attendee, %{name: name})
 
     Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-      updated_attendee: attendee
+      attendee: attendee
     })
 
     {:noreply, socket}
@@ -122,7 +105,7 @@ defmodule CoreWeb.Events.ShowLive do
     attendee = Events.update_attendee!(attendee, %{available_days: available_days})
 
     Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-      updated_attendee: attendee
+      attendee: attendee
     })
 
     {:noreply, socket}
@@ -144,10 +127,10 @@ defmodule CoreWeb.Events.ShowLive do
     Events.delete_attendee!(attendee)
 
     Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-      deleted_attendee: attendee
+      attendee: attendee
     })
 
-    {:noreply, socket}
+    {:noreply, push_navigate(socket, to: ~p"/events")}
   end
 
   @impl true
@@ -157,7 +140,7 @@ defmodule CoreWeb.Events.ShowLive do
       Events.delete_attendee!(attendee)
 
       Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        deleted_attendee: attendee
+        attendee: attendee
       })
 
       {:noreply, socket}
@@ -173,7 +156,7 @@ defmodule CoreWeb.Events.ShowLive do
       attendee = Events.update_attendee!(attendee, %{role: role})
 
       Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        updated_attendee: attendee
+        attendee: attendee
       })
     end
 
@@ -209,8 +192,13 @@ defmodule CoreWeb.Events.ShowLive do
     assign(socket, :current_attendee, attendee)
   end
 
+  defp refresh_event(socket) do
+    event = Events.get_event(socket.assigns.event.id)
+    assign(socket, :event, event)
+  end
+
   defp assign_other_attendees(socket) do
-    event_attendees = Events.list_attendees_by(event_id: socket.assigns.event.id)
+    event_attendees = socket.assigns.event.attendees
     current_attendee = socket.assigns.current_attendee
 
     other_attendees =

@@ -9,7 +9,14 @@ defmodule CoreWeb.Events.IndexLive do
 
   @impl true
   def handle_params(_params, _uri, socket) do
+    attendees = Events.list_attendees_by(browser_id: socket.assigns.browser_id)
+    events = Enum.map(attendees, &Events.get_event(&1.event_id))
+    {:noreply, assign(socket, :events, events)}
+  end
+
+  @impl true
+  def handle_event("create_event", _params, socket) do
     event = Events.create_event!()
-    {:noreply, push_patch(socket, to: ~p"/events/#{event.id}", replace: true)}
+    {:noreply, push_navigate(socket, to: ~p"/events/#{event.id}", replace: true)}
   end
 end

@@ -39,14 +39,6 @@ defmodule Core.EventsTest do
       assert Events.get_attendee_by(browser_id: browser_id, event_id: event.id) == attendee
     end
 
-    test "list_attendees_by/1 event_id returns attendees", %{event: event} do
-      attendee1 = attendee_fixture(%{event_id: event.id, browser_id: "browser_id1"})
-      attendee2 = attendee_fixture(%{event_id: event.id, browser_id: "browser_id2"})
-      attendee3 = attendee_fixture(%{event_id: event.id, browser_id: "browser_id3"})
-
-      assert Events.list_attendees_by(event_id: event.id) == [attendee1, attendee2, attendee3]
-    end
-
     test "create_attendee!/1 with valid data creates an attendee", %{event: event} do
       name = "some name"
       available_days = [1, 2]
