@@ -1,6 +1,7 @@
 defmodule CoreWeb.Events.ShowLive do
   use CoreWeb, :live_view
   alias Core.Events
+  alias Phoenix.LiveView.JS
 
   @impl true
   def mount(_params, %{"browser_id" => browser_id}, socket) do
@@ -68,21 +69,6 @@ defmodule CoreWeb.Events.ShowLive do
 
       {password, false} when is_binary(password) ->
         {:noreply, put_flash(socket, :error, "Wrong password")}
-    end
-  end
-
-  @impl true
-  def handle_event("update_event_password", %{"password" => password}, socket) do
-    if socket.assigns.current_attendee.role == :admin do
-      event = Events.update_event!(socket.assigns.event, %{password: password})
-
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        event: event
-      })
-
-      {:noreply, socket |> put_flash(:info, "Successfully updated event password")}
-    else
-      {:noreply, socket}
     end
   end
 
@@ -174,6 +160,21 @@ defmodule CoreWeb.Events.ShowLive do
     end
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("update_event_password", %{"password" => password}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      event = Events.update_event!(socket.assigns.event, %{password: password})
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        event: event
+      })
+
+      {:noreply, socket |> put_flash(:info, "Successfully updated event password")}
+    else
+      {:noreply, socket}
+    end
   end
 
   defp subscribe_to_events(socket) do

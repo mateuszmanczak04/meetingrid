@@ -15,12 +15,12 @@ defmodule CoreWeb.EventsLiveViewTest do
     # User 1 joins and enters name
     {:ok, view_a, _html_a} = live(conn, "/events/#{event.id}")
     form(view_a, "#join_form", %{"name" => "#{user_a_name}"}) |> render_submit()
-    assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
+    assert has_element?(view_a, "tr > td", "#{user_a_name} (You)")
 
     # User 2 joins and enters name
     {:ok, view_b, _html_a} = live(conn, "/events/#{event.id}")
     form(view_b, "#join_form", %{"name" => user_b_name}) |> render_submit()
-    assert has_element?(view_b, "tr > td", "You (#{user_b_name})")
+    assert has_element?(view_b, "tr > td", "#{user_b_name} (You)")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")
     assert has_element?(view_a, "tr > td", "#{user_b_name}")
     assert has_element?(view_a, "tbody > tr:nth-child(2) > td > button", "Add admin")
@@ -84,7 +84,7 @@ defmodule CoreWeb.EventsLiveViewTest do
     # Update User 1 name
     new_user_a_name = "Chris"
     form(view_a, "#attendee_form", %{"name" => "#{new_user_a_name}"}) |> render_submit()
-    assert has_element?(view_a, "tr > td", "You (#{new_user_a_name})")
+    assert has_element?(view_a, "tr > td", "#{new_user_a_name} (You)")
     assert has_element?(view_b, "tr > td", "#{new_user_a_name}")
 
     #  User 1 leaves
@@ -110,7 +110,7 @@ defmodule CoreWeb.EventsLiveViewTest do
     form(view_a, "#join_form", %{"name" => user_a_name, "password" => event_password})
     |> render_submit()
 
-    assert has_element?(view_a, "tr > td", "You (#{user_a_name})")
+    assert has_element?(view_a, "tr > td", "#{user_a_name} (You)")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")
   end
 

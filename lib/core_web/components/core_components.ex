@@ -224,6 +224,7 @@ defmodule CoreWeb.CoreComponents do
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
   attr :variant, :string, values: ["primary", "secondary", "danger"], default: "primary"
+  attr :size, :string, values: ["default", "sm", "xs"], default: "default"
 
   slot :inner_block, required: true
 
@@ -232,7 +233,10 @@ defmodule CoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg hover:opacity-90 transition-oapcity py-2 px-3 cursor-pointer text-sm font-medium h-10",
+        "phx-submit-loading:opacity-75 hover:opacity-90 transition-oapcity cursor-pointer font-medium",
+        @size == "default" && "text-sm h-10 px-3 rounded-lg",
+        @size == "sm" && "text-xs h-8 px-2 rounded-md",
+        @size == "xs" && "text-xs h-6 px-1 rounded-md",
         @variant == "primary" && "bg-primary",
         @variant == "secondary" && "bg-gray-100 text-gray-700",
         @variant == "danger" && "bg-red-100 text-red-700",
@@ -275,6 +279,7 @@ defmodule CoreWeb.CoreComponents do
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
+  attr :class, :string, default: nil
 
   attr :type, :string,
     default: "text",
@@ -312,7 +317,7 @@ defmodule CoreWeb.CoreComponents do
       end)
 
     ~H"""
-    <div>
+    <div class={@class}>
       <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
         <input
@@ -338,7 +343,10 @@ defmodule CoreWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class={[
+          "block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm",
+          @class
+        ]}
         multiple={@multiple}
         {@rest}
       >
@@ -358,9 +366,10 @@ defmodule CoreWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
+          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
+          @errors != [] && "border-rose-400 focus:border-rose-400",
+          @class
         ]}
         {@rest}
       >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
@@ -380,9 +389,10 @@ defmodule CoreWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm h-10",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
+          @errors != [] && "border-rose-400 focus:border-rose-400",
+          @class
         ]}
         {@rest}
       />
@@ -395,11 +405,12 @@ defmodule CoreWeb.CoreComponents do
   Renders a label.
   """
   attr :for, :string, default: nil
+  attr :class, :string, default: nil
   slot :inner_block, required: true
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
+    <label for={@for} class={["block text-sm font-medium", @class]}>
       {render_slot(@inner_block)}
     </label>
     """

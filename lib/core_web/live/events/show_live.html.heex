@@ -1,4 +1,4 @@
-<header class="flex gap-x-2">
+<header class="flex gap-x-2 mb-6">
   <.link navigate={~p"/events"}>
     <.button variant="secondary">
       <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to events list
@@ -6,117 +6,127 @@
   </.link>
   <.button
     :if={@current_attendee}
-    variant="danger"
-    phx-click="leave"
-    id="leave_button"
-    class="ml-auto"
+    variant="secondary"
+    phx-click={show_modal(%JS{}, "settings")}
+    id="settings_button"
   >
-    <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave
+    <.icon name="hero-cog" class="size-4 -translate-y-px" /> Settings
   </.button>
-  <.button phx-hook="CopyToClipboard" id="share_button" class={!@current_attendee && "ml-auto"}>
+
+  <.button phx-hook="CopyToClipboard" id="share_button">
     <.icon name="hero-share" class="size-4 -translate-y-px" /> Share
   </.button>
+
+  <.button :if={@current_attendee} variant="danger" phx-click="leave" id="leave_button">
+    <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave
+  </.button>
 </header>
-<h1 :if={@event.title} class="font-bold text-4xl mt-4">{@event.title}</h1>
-<p>Choose the common day that you and your friends can meet together!</p>
 
-<div class="grid grid-cols-3 mt-4 gap-4">
-  <form
-    :if={@current_attendee && @current_attendee.role == :admin}
-    id="update_event_form"
-    phx-submit="update_event"
-    class="border rounded-xl p-4 grid"
-  >
-    <label for="join_input">Change event title</label>
-    <.input
-      class="mt-1"
-      id="event_title_input"
-      type="text"
-      required
-      name="title"
-      placeholder="Meetup at the bar"
-      value={@event && @event.title}
-    />
-    <.button class="mt-2" type="submit">Save event title</.button>
-  </form>
+<h1 :if={@current_attendee} class="font-bold text-4xl mb-4">{@event.title}</h1>
 
-  <%= if @current_attendee do %>
-    <form
-      :if={@current_attendee}
-      id="attendee_form"
-      phx-submit="update_attendee"
-      class="border rounded-xl p-4 grid"
-    >
-      <label for="attendee_name">Update your name</label>
-      <.input
-        class="mt-1"
-        id="attendee_name"
-        type="text"
-        required
-        name="name"
-        placeholder="John"
-        value={@current_attendee.name}
-      />
-      <.button class="mt-2" type="submit">Save</.button>
-    </form>
-  <% else %>
-    <form
-      :if={!@current_attendee}
-      id="join_form"
-      phx-submit="join"
-      class="border rounded-xl p-4 grid"
-    >
-      <h2 class="text-xl font-bold">Join event</h2>
-      <label for="attendee_name">Your name</label>
-      <.input
-        class="mt-1"
-        type="text"
-        id="attendee_name"
-        required
-        name="name"
-        placeholder="John"
-        value=""
-      />
+<form
+  :if={!@current_attendee}
+  id="join_form"
+  phx-submit="join"
+  class="border rounded-xl max-w-xs p-6"
+>
+  <h2 class="text-xl font-semibold">Join event: {@event.title}</h2>
+  <.label for="attendee_name" class="mt-3">Your name</.label>
+  <.input
+    type="text"
+    id="attendee_name"
+    required
+    name="name"
+    placeholder="John"
+    value=""
+    class="mt-1"
+  />
+  <.label :if={@event.password} for="attendee_name" class="mt-3">Event password</.label>
+  <.input
+    :if={@event.password}
+    class="mt-1"
+    type="password"
+    id="join_event_password"
+    required
+    name="password"
+    placeholder="••••••••"
+    value=""
+  />
+  <.button class="mt-6 w-full" type="submit">Join event</.button>
+</form>
 
-      <label :if={@event.password} for="join_event_password">Event password</label>
-      <.input
-        :if={@event.password}
-        class="mt-1"
-        type="password"
-        id="join_event_password"
-        required
-        name="password"
-        placeholder="••••••••"
-        value=""
-      />
-      <.button class="mt-2" type="submit">Join event</.button>
-    </form>
-  <% end %>
+<.modal :if={@current_attendee} id="settings">
+  <div class="grid grid-cols-2 gap-x-6">
+    <div>
+      <h2 class="text-xl font-semibold">Profile settings</h2>
+      <form :if={@current_attendee} id="attendee_form" phx-submit="update_attendee">
+        <.label for="attendee_name" class="mt-3">Your name</.label>
+        <div class="flex items-center mt-2">
+          <.input
+            class="rounded-r-none"
+            type="text"
+            id="attendee_name"
+            required
+            name="name"
+            placeholder="John"
+            value={@current_attendee.name}
+          />
+          <.button class="rounded-l-none" type="submit">Save</.button>
+        </div>
+      </form>
+    </div>
 
-  <form
-    :if={@current_attendee && @current_attendee.role == :admin}
-    id="event_password_form"
-    phx-submit="update_event_password"
-    class="border rounded-xl p-4 grid"
-  >
-    <label for="event_password">
-      Change event password
-      <small class="block text-muted-foreground">Leave empty input to remove password</small>
-    </label>
-    <.input
-      class="mt-1"
-      id="event_password"
-      type="password"
-      name="password"
-      placeholder="••••••••"
-      value=""
-    />
-    <.button class="mt-2" type="submit">Save event password</.button>
-  </form>
-</div>
+    <div :if={@current_attendee.role == :admin}>
+      <h2 class="text-xl font-semibold">Event settings</h2>
+      <form id="update_event_form" phx-submit="update_event" class="mt-2">
+        <.label for="join_input">Title</.label>
+        <div class="flex items-center mt-2">
+          <.input
+            class="rounded-r-none"
+            id="event_title_input"
+            type="text"
+            required
+            name="title"
+            placeholder="Meetup at the bar"
+            value={@event && @event.title}
+          />
+          <.button class="rounded-l-none" type="submit">Save</.button>
+        </div>
+      </form>
 
-<div :if={!@event.password || (@event.password && @current_attendee)} class="mt-6">
-  <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed">
+      <form
+        :if={@current_attendee.role == :admin}
+        id="event_password_form"
+        phx-submit="update_event_password"
+        class="mt-6"
+      >
+        <.label for="event_password">
+          Password
+        </.label>
+        <div class="flex items-center mt-2">
+          <.input
+            class="rounded-r-none"
+            id="event_password"
+            type="password"
+            name="password"
+            placeholder="••••••••"
+            value=""
+          />
+          <.button class="rounded-l-none" type="submit">Save</.button>
+        </div>
+      </form>
+    </div>
+  </div>
+</.modal>
+
+<div
+  :if={
+    (!@event.password || (@event.password && @current_attendee)) &&
+      [@current_attendee] ++ @other_attendees != []
+  }
+  class="mt-6"
+>
+  <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10">
     <thead>
       <tr>
         <th class="bg-gray-100 w-40">Attendee</th>
@@ -129,7 +139,7 @@
             {text}
           </th>
         <% end %>
-        <th :if={@current_attendee && @current_attendee.role == :admin} class="bg-gray-100 w-32">
+        <th :if={@current_attendee && @current_attendee.role == :admin} class="bg-gray-100 w-36">
           Options
         </th>
       </tr>
@@ -137,8 +147,8 @@
     <tbody>
       <tr :if={@current_attendee} data-attendee={to_string(@current_attendee.browser_id)}>
         <td class="text-nowrap truncate overflow-hidden">
-          You ({@current_attendee.name})
-          <span :if={@current_attendee.role == :admin}>(Organizer)</span>
+          <span :if={@current_attendee.role == :admin} class="text-red-500">(A)</span>
+          {@current_attendee.name} (You)
         </td>
         <td
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
@@ -154,8 +164,8 @@
 
       <tr :for={attendee <- @other_attendees} data-attendee={to_string(attendee.browser_id)}>
         <td class="text-nowrap truncate overflow-hidden">
+          <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
           {attendee.name}
-          <span :if={attendee.role == :admin}>(Organizer)</span>
         </td>
         <td
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
@@ -165,11 +175,17 @@
         >
         </td>
         <td :if={@current_attendee && @current_attendee.role == :admin}>
-          <.button variant="secondary" phx-click="kick" phx-value-browser_id={attendee.browser_id}>
+          <.button
+            variant="danger"
+            size="xs"
+            phx-click="kick"
+            phx-value-browser_id={attendee.browser_id}
+          >
             Kick
           </.button>
           <.button
             variant="secondary"
+            size="xs"
             phx-click="change_role"
             phx-value-role={if attendee.role == :admin, do: :user, else: :admin}
             phx-value-browser_id={attendee.browser_id}

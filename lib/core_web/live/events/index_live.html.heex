@@ -1,5 +1,9 @@
 <h1 class="text-4xl font-bold">Your Events</h1>
 
+<.button id="create_event_button" phx-click="create_event" class="mt-4">
+  <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new event
+</.button>
+
 <section class="grid grid-cols-3 gap-4 mt-4">
   <%= for event <- @events do %>
     <article id={"event-#{event.id}"} class="p-4 rounded-xl border flex flex-col">
@@ -22,9 +26,3 @@
     </article>
   <% end %>
 </section>
-
-<div class="w-full flex justify-end mt-4">
-  <.button id="create_event_button" phx-click="create_event">
-    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new event
-  </.button>
-</div>
