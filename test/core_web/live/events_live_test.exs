@@ -2,6 +2,7 @@ defmodule CoreWeb.EventsLiveViewTest do
   use CoreWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   import Core.EventsFixtures
+  alias Core.Events
 
   setup do
     event = event_fixture(%{title: "Evening bar"})
@@ -112,6 +113,10 @@ defmodule CoreWeb.EventsLiveViewTest do
 
     assert has_element?(view_a, "tr > td", "#{user_a_name} (You)")
     assert has_element?(view_b, "tr > td", "#{user_a_name}")
+
+    # User 2 deletes event
+    element(view_b, "#delete-event-button") |> render_click()
+    assert Events.get_event(event.id) == nil
   end
 
   test "Visiting page with non-existing event redirects to /events", %{conn: conn} do

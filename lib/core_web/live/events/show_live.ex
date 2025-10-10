@@ -37,6 +37,14 @@ defmodule CoreWeb.Events.ShowLive do
   end
 
   @impl true
+  def handle_info(%{event: :delete}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "This event has been deleted")
+     |> push_navigate(to: ~p"/events")}
+  end
+
+  @impl true
   def handle_info(%{event: event}, socket) do
     {:noreply, assign(socket, :event, event)}
   end
@@ -173,6 +181,18 @@ defmodule CoreWeb.Events.ShowLive do
 
       {:noreply, socket |> put_flash(:info, "Successfully updated event password")}
     else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("delete", %{}, socket) do
+    if socket.assigns.current_attendee.role == :admin do
+      Events.delete_event!(socket.assigns.event)
+
+      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        event: :delete
+      })
+
       {:noreply, socket}
     end
   end

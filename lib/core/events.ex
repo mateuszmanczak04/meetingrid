@@ -25,6 +25,10 @@ defmodule Core.Events do
     |> Repo.update!()
   end
 
+  def delete_event!(%Event{} = event) do
+    Repo.delete!(event)
+  end
+
   # ATTENDEES
 
   def get_attendee_by(clauses), do: Repo.get_by(Attendee, clauses)

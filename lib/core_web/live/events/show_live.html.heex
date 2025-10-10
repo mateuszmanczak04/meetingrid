@@ -115,6 +115,16 @@
           <.button class="rounded-l-none" type="submit">Save</.button>
         </div>
       </form>
+
+      <.button
+        :if={@current_attendee.role == :admin}
+        id="delete-event-button"
+        phx-click="delete"
+        variant="danger"
+        class="mt-6"
+      >
+        Delete event
+      </.button>
     </div>
   </div>
 </.modal>

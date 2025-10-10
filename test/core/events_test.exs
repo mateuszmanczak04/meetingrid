@@ -19,6 +19,12 @@ defmodule Core.EventsTest do
       assert %Event{} = event = Events.create_event!(valid_attrs)
       assert event.title == "some title"
     end
+
+    test "delete_event!/1 deletes event" do
+      event = event_fixture()
+      Events.delete_event!(event)
+      assert Events.get_event(event.id) == nil
+    end
   end
 
   describe "attendees" do
