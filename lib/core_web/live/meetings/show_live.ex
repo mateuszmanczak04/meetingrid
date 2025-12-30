@@ -1,6 +1,6 @@
-defmodule CoreWeb.Events.ShowLive do
+defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
-  alias Core.Events
+  alias Core.Meetings
   alias Phoenix.LiveView.JS
 
   @impl true
@@ -9,12 +9,12 @@ defmodule CoreWeb.Events.ShowLive do
   end
 
   @impl true
-  def handle_params(%{"id" => event_id}, _uri, socket) do
-    event = Events.get_event(String.to_integer(event_id))
+  def handle_params(%{"id" => meeting_id}, _uri, socket) do
+    meeting = Meetings.get_meeting(String.to_integer(meeting_id))
 
-    if event do
-      socket = assign(socket, :event, event)
-      subscribe_to_events(socket)
+    if meeting do
+      socket = assign(socket, :meeting, meeting)
+      subscribe_to_meetings(socket)
 
       {:noreply,
        socket
@@ -22,7 +22,7 @@ defmodule CoreWeb.Events.ShowLive do
        |> assign_other_attendees()
        |> assign_matching_days()}
     else
-      {:noreply, push_navigate(socket, to: ~p"/events", replace: true)}
+      {:noreply, push_navigate(socket, to: ~p"/meetings", replace: true)}
     end
   end
 
@@ -30,46 +30,46 @@ defmodule CoreWeb.Events.ShowLive do
   def handle_info(%{attendee: _attendee}, socket) do
     {:noreply,
      socket
-     |> refresh_event()
+     |> refresh_meeting()
      |> assign_current_attendee()
      |> assign_other_attendees()
      |> assign_matching_days()}
   end
 
   @impl true
-  def handle_info(%{event: :delete}, socket) do
+  def handle_info(%{meeting: :delete}, socket) do
     {:noreply,
      socket
-     |> put_flash(:info, "This event has been deleted")
-     |> push_navigate(to: ~p"/events")}
+     |> put_flash(:info, "This meeting has been deleted")
+     |> push_navigate(to: ~p"/meetings")}
   end
 
   @impl true
-  def handle_info(%{event: event}, socket) do
-    {:noreply, assign(socket, :event, event)}
+  def handle_info(%{meeting: meeting}, socket) do
+    {:noreply, assign(socket, :meeting, meeting)}
   end
 
   @impl true
   def handle_event("join", %{"name" => name} = params, socket) do
-    case {socket.assigns.event.password,
+    case {socket.assigns.meeting.password,
           params["password"] &&
-            Argon2.verify_pass(params["password"], socket.assigns.event.password)} do
+            Argon2.verify_pass(params["password"], socket.assigns.meeting.password)} do
       {password, verified} when is_nil(password) or (is_binary(password) and verified) ->
         attendee =
-          Events.create_attendee!(%{
-            event_id: socket.assigns.event.id,
+          Meetings.create_attendee!(%{
+            meeting_id: socket.assigns.meeting.id,
             browser_id: socket.assigns.browser_id,
             name: name,
             role:
               if(
-                Enum.empty?(socket.assigns.event.attendees) &&
-                  is_nil(socket.assigns.event.password),
+                Enum.empty?(socket.assigns.meeting.attendees) &&
+                  is_nil(socket.assigns.meeting.password),
                 do: :admin,
                 else: :user
               )
           })
 
-        Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+        Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
           attendee: attendee
         })
 
@@ -82,9 +82,9 @@ defmodule CoreWeb.Events.ShowLive do
 
   @impl true
   def handle_event("update_attendee", %{"name" => name}, socket) do
-    attendee = Events.update_attendee!(socket.assigns.current_attendee, %{name: name})
+    attendee = Meetings.update_attendee!(socket.assigns.current_attendee, %{name: name})
 
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+    Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
       attendee: attendee
     })
 
@@ -96,9 +96,9 @@ defmodule CoreWeb.Events.ShowLive do
     attendee = socket.assigns.current_attendee
     available_days = toggle_available_day(attendee.available_days, String.to_integer(day_number))
 
-    attendee = Events.update_attendee!(attendee, %{available_days: available_days})
+    attendee = Meetings.update_attendee!(attendee, %{available_days: available_days})
 
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+    Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
       attendee: attendee
     })
 
@@ -118,22 +118,22 @@ defmodule CoreWeb.Events.ShowLive do
   @impl true
   def handle_event("leave", _params, socket) do
     attendee = socket.assigns.current_attendee
-    Events.delete_attendee!(attendee)
+    Meetings.delete_attendee!(attendee)
 
-    Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+    Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
       attendee: attendee
     })
 
-    {:noreply, push_navigate(socket, to: ~p"/events")}
+    {:noreply, push_navigate(socket, to: ~p"/meetings")}
   end
 
   @impl true
   def handle_event("kick", %{"browser_id" => browser_id}, socket) do
     if socket.assigns.current_attendee.role == :admin do
       attendee = Enum.find(socket.assigns.other_attendees, &(&1.browser_id == browser_id))
-      Events.delete_attendee!(attendee)
+      Meetings.delete_attendee!(attendee)
 
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+      Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
         attendee: attendee
       })
 
@@ -147,9 +147,9 @@ defmodule CoreWeb.Events.ShowLive do
   def handle_event("change_role", %{"role" => role, "browser_id" => browser_id}, socket) do
     if socket.assigns.current_attendee.role == :admin do
       attendee = Enum.find(socket.assigns.other_attendees, &(&1.browser_id == browser_id))
-      attendee = Events.update_attendee!(attendee, %{role: role})
+      attendee = Meetings.update_attendee!(attendee, %{role: role})
 
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
+      Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
         attendee: attendee
       })
     end
@@ -158,12 +158,12 @@ defmodule CoreWeb.Events.ShowLive do
   end
 
   @impl true
-  def handle_event("update_event", %{"title" => title}, socket) do
+  def handle_event("update_meeting", %{"title" => title}, socket) do
     if socket.assigns.current_attendee.role == :admin do
-      event = Events.update_event!(socket.assigns.event, %{title: title})
+      meeting = Meetings.update_meeting!(socket.assigns.meeting, %{title: title})
 
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        event: event
+      Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
+        meeting: meeting
       })
     end
 
@@ -171,15 +171,15 @@ defmodule CoreWeb.Events.ShowLive do
   end
 
   @impl true
-  def handle_event("update_event_password", %{"password" => password}, socket) do
+  def handle_event("update_meeting_password", %{"password" => password}, socket) do
     if socket.assigns.current_attendee.role == :admin do
-      event = Events.update_event!(socket.assigns.event, %{password: password})
+      meeting = Meetings.update_meeting!(socket.assigns.meeting, %{password: password})
 
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        event: event
+      Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
+        meeting: meeting
       })
 
-      {:noreply, socket |> put_flash(:info, "Successfully updated event password")}
+      {:noreply, socket |> put_flash(:info, "Successfully updated meeting password")}
     else
       {:noreply, socket}
     end
@@ -187,46 +187,46 @@ defmodule CoreWeb.Events.ShowLive do
 
   def handle_event("delete", %{}, socket) do
     if socket.assigns.current_attendee.role == :admin do
-      Events.delete_event!(socket.assigns.event)
+      Meetings.delete_meeting!(socket.assigns.meeting)
 
-      Phoenix.PubSub.broadcast(Core.PubSub, "event-#{socket.assigns.event.id}", %{
-        event: :delete
+      Phoenix.PubSub.broadcast(Core.PubSub, "meeting-#{socket.assigns.meeting.id}", %{
+        meeting: :delete
       })
 
       {:noreply, socket}
     end
   end
 
-  defp subscribe_to_events(socket) do
+  defp subscribe_to_meetings(socket) do
     if connected?(socket) do
-      Phoenix.PubSub.subscribe(Core.PubSub, "event-#{socket.assigns.event.id}")
+      Phoenix.PubSub.subscribe(Core.PubSub, "meeting-#{socket.assigns.meeting.id}")
     end
   end
 
   defp assign_current_attendee(socket) do
     attendee =
-      Events.get_attendee_by(
+      Meetings.get_attendee_by(
         browser_id: socket.assigns.browser_id,
-        event_id: socket.assigns.event.id
+        meeting_id: socket.assigns.meeting.id
       )
 
     assign(socket, :current_attendee, attendee)
   end
 
-  defp refresh_event(socket) do
-    event = Events.get_event(socket.assigns.event.id)
-    assign(socket, :event, event)
+  defp refresh_meeting(socket) do
+    meeting = Meetings.get_meeting(socket.assigns.meeting.id)
+    assign(socket, :meeting, meeting)
   end
 
   defp assign_other_attendees(socket) do
-    event_attendees = socket.assigns.event.attendees
+    meeting_attendees = socket.assigns.meeting.attendees
     current_attendee = socket.assigns.current_attendee
 
     other_attendees =
       if current_attendee do
-        Enum.reject(event_attendees, &(&1.browser_id == current_attendee.browser_id))
+        Enum.reject(meeting_attendees, &(&1.browser_id == current_attendee.browser_id))
       else
-        event_attendees
+        meeting_attendees
       end
       |> Enum.sort_by(& &1.name)
 

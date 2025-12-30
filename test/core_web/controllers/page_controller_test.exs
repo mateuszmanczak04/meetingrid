@@ -3,6 +3,6 @@ defmodule CoreWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert redirected_to(conn, 302) =~ "/events"
+    assert redirected_to(conn, 302) =~ "/meetings"
   end
 end

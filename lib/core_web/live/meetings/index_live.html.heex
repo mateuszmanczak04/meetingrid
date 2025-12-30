@@ -1,0 +1,28 @@
+<h1 class="text-4xl font-bold">Your Meetings</h1>
+
+<.button id="create_meeting_button" phx-click="create_meeting" class="mt-4">
+  <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
+</.button>
+
+<section class="grid grid-cols-3 gap-4 mt-4">
+  <%= for meeting <- @meetings do %>
+    <article id={"meeting-#{meeting.id}"} class="p-4 rounded-xl border flex flex-col">
+      <h2 class="font-semibold text-lg">
+        {if meeting.title != "", do: meeting.title, else: "Untitled"}
+      </h2>
+
+      <ul
+        id={"meeting-#{meeting.id}-attendees"}
+        class="text-muted-foreground list-disc list-inside mt-2"
+      >
+        <li :for={attendee <- meeting.attendees}>{attendee.name}</li>
+      </ul>
+
+      <.link navigate={~p"/meetings/#{meeting.id}"} class="w-fit ml-auto mt-auto">
+        <.button variant="secondary">
+          Go to meeting <.icon name="hero-chevron-right" class="size-4 -translate-y-px" />
+        </.button>
+      </.link>
+    </article>
+  <% end %>
+</section>
