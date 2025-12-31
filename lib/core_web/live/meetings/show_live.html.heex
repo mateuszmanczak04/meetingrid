@@ -5,7 +5,7 @@
     </.button>
   </.link>
   <.button
-    :if={@current_attendee}
+    :if={@current_attendee.role == :admin}
     variant="secondary"
     phx-click={show_modal(%JS{}, "settings")}
     id="settings_button"
@@ -17,168 +17,93 @@
     <.icon name="hero-share" class="size-4 -translate-y-px" /> Share
   </.button>
 
-  <.button :if={@current_attendee} variant="danger" phx-click="leave" id="leave_button">
+  <.button variant="danger" phx-click="leave" id="leave_button">
     <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave
   </.button>
 </header>
 
-<h1 :if={@current_attendee} class="font-bold text-4xl mb-4">{@meeting.title}</h1>
+<h1 class="font-bold text-4xl mb-4">{@meeting.title}</h1>
 
-<form
-  :if={!@current_attendee}
-  id="join_form"
-  phx-submit="join"
-  class="border rounded-xl max-w-xs p-6"
->
-  <h2 class="text-xl font-semibold">Join meeting: {@meeting.title}</h2>
-  <.label for="attendee_name" class="mt-3">Your name</.label>
-  <.input
-    type="text"
-    id="attendee_name"
-    required
-    name="name"
-    placeholder="John"
-    value=""
-    class="mt-1"
-  />
-  <.button class="mt-6 w-full" type="submit">Join meeting</.button>
-</form>
-
-<.modal :if={@current_attendee} id="settings">
-  <div class="grid grid-cols-2 gap-x-6">
-    <div>
-      <h2 class="text-xl font-semibold">Profile settings</h2>
-      <form :if={@current_attendee} id="attendee_form" phx-submit="update_attendee">
-        <.label for="attendee_name" class="mt-3">Your name</.label>
-        <div class="flex items-center mt-2">
-          <.input
-            class="rounded-r-none"
-            type="text"
-            id="attendee_name"
-            required
-            name="name"
-            placeholder="John"
-            value={@current_attendee.name}
-          />
-          <.button class="rounded-l-none" type="submit">Save</.button>
-        </div>
-      </form>
+<.modal :if={@current_attendee.role == :admin} id="settings">
+  <h2 class="text-xl font-semibold">Meeting settings</h2>
+  <form id="update_meeting_form" phx-submit="update_meeting" class="mt-2">
+    <.label for="join_input">Title</.label>
+    <div class="flex items-center mt-2">
+      <.input
+        class="rounded-r-none"
+        id="meeting_title_input"
+        type="text"
+        required
+        name="title"
+        placeholder="Meetup at the bar"
+        value={@meeting.title}
+      />
+      <.button class="rounded-l-none" type="submit">Save</.button>
     </div>
+  </form>
 
-    <div :if={@current_attendee.role == :admin}>
-      <h2 class="text-xl font-semibold">Meeting settings</h2>
-      <form id="update_meeting_form" phx-submit="update_meeting" class="mt-2">
-        <.label for="join_input">Title</.label>
-        <div class="flex items-center mt-2">
-          <.input
-            class="rounded-r-none"
-            id="meeting_title_input"
-            type="text"
-            required
-            name="title"
-            placeholder="Meetup at the bar"
-            value={@meeting && @meeting.title}
-          />
-          <.button class="rounded-l-none" type="submit">Save</.button>
-        </div>
-      </form>
-
-      <.button
-        :if={@current_attendee.role == :admin}
-        id="delete-meeting-button"
-        phx-click="delete"
-        variant="danger"
-        class="mt-6"
-      >
-        Delete meeting
-      </.button>
-    </div>
-  </div>
+  <.button id="delete-meeting-button" phx-click="delete" variant="danger" class="mt-6">
+    Delete meeting
+  </.button>
 </.modal>
 
-<div
-  :if={
-    (!@meeting.password || (@meeting.password && @current_attendee)) &&
-      [@current_attendee] ++ @other_attendees != []
-  }
-  class="mt-6"
->
-  <table class="mt-2 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10">
-    <thead>
-      <tr>
-        <th class="bg-gray-100 w-40">Attendee</th>
-        <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
-          <th
-            data-day={index}
-            data-match={index in @matching_days && "true"}
-            class="bg-gray-100 data-[match='true']:bg-green-200"
-          >
-            {text}
-          </th>
-        <% end %>
-        <th :if={@current_attendee && @current_attendee.role == :admin} class="bg-gray-100 w-36">
-          Options
+{inspect(@common_days)}
+<table class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10">
+  <thead>
+    <tr>
+      <th class="bg-gray-100 w-40">Attendee</th>
+      <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
+        <th
+          data-day={index}
+          data-match={index in @common_days && "true"}
+          class="bg-gray-100 data-[match='true']:bg-green-200"
+        >
+          {text}
         </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr :if={@current_attendee} data-attendee={to_string(@current_attendee.browser_id)}>
-        <td class="text-nowrap truncate overflow-hidden">
-          <span :if={@current_attendee.role == :admin} class="text-red-500">(A)</span>
-          {@current_attendee.name} (You)
-        </td>
-        <td
-          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
-          phx-click="choose_day"
-          data-day={day_number}
-          data-selected={day_number in @current_attendee.available_days && "true"}
-          phx-value-day_number={day_number}
-          class="cursor-pointer transition-colors hover:bg-green-300 data-[selected='true']:bg-green-400"
+      <% end %>
+      <th :if={@current_attendee.role == :admin} class="bg-gray-100 w-36">
+        Options
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr :for={attendee <- @meeting.attendees} data-attendee={to_string(attendee.id)}>
+      <td class="text-nowrap truncate overflow-hidden">
+        <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
+        <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
+        {attendee.user.name}
+      </td>
+      <td
+        :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
+        data-day={day_number}
+        data-selected={day_number in attendee.available_days && "true"}
+        class="transition-colors data-[selected='true']:bg-green-400"
+        phx-click={attendee.id == @current_attendee.id && "choose_day"}
+        phx-value-day_number={day_number}
+      >
+      </td>
+      <td :if={@current_attendee.role == :admin}>
+        <.button
+          :if={@current_attendee.id != attendee.id}
+          variant="danger"
+          size="xs"
+          phx-click="kick"
+          phx-value-attendee_id={attendee.id}
+          id={"kick-#{attendee.id}"}
         >
-        </td>
-        <td :if={@current_attendee.role == :admin}></td>
-      </tr>
-
-      <tr :for={attendee <- @other_attendees} data-attendee={to_string(attendee.browser_id)}>
-        <td class="text-nowrap truncate overflow-hidden">
-          <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
-          {attendee.name}
-        </td>
-        <td
-          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
-          data-day={day_number}
-          data-selected={day_number in attendee.available_days && "true"}
-          class="transition-colors data-[selected='true']:bg-green-400"
+          Kick
+        </.button>
+        <.button
+          :if={@current_attendee.id != attendee.id}
+          variant="secondary"
+          size="xs"
+          phx-click="change_role"
+          phx-value-attendee_id={attendee.id}
+          id={"change_role-#{attendee.id}"}
         >
-        </td>
-        <td :if={@current_attendee && @current_attendee.role == :admin}>
-          <.button
-            variant="danger"
-            size="xs"
-            phx-click="kick"
-            phx-value-browser_id={attendee.browser_id}
-          >
-            Kick
-          </.button>
-          <.button
-            variant="secondary"
-            size="xs"
-            phx-click="change_role"
-            phx-value-role={if attendee.role == :admin, do: :user, else: :admin}
-            phx-value-browser_id={attendee.browser_id}
-            id={"change_role_#{attendee.browser_id}"}
-          >
-            {if attendee.role == :admin, do: "Remove admin", else: "Add admin"}
-          </.button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p
-    :if={!@current_attendee && @other_attendees == []}
-    class="text-muted-foreground mt-4 text-center"
-  >
-    There are no attendees yet
-  </p>
-</div>
+          {if attendee.role == :admin, do: "Remove admin", else: "Add admin"}
+        </.button>
+      </td>
+    </tr>
+  </tbody>
+</table>

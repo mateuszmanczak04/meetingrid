@@ -5,8 +5,7 @@ defmodule Core.Meetings.Meeting do
   schema "meetings" do
     field :title, :string
 
-    has_many :meetings_attendees, Core.Meetings.MeetingsAttendees
-    has_many :attendees, through: [:meetings_attendees, :attendee]
+    has_many :attendees, Core.Meetings.Attendee
     has_many :invitations, Core.Meetings.Invitation
 
     timestamps(type: :utc_datetime)

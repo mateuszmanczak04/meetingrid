@@ -4,35 +4,25 @@ defmodule CoreWeb.Meetings.IndexLive do
   import CoreWeb.CoreComponents
 
   @impl true
-  def mount(_params, %{"attendee" => attendee}, socket) do
-    {:ok, assign(socket, :attendee, attendee)}
+  def mount(_params, %{"user" => user}, socket) do
+    {:ok, assign(socket, :user, user)}
   end
 
   @impl true
   def handle_params(_params, _uri, socket) do
-    attendee = Core.Repo.preload(socket.assigns.attendee, meetings: [:attendees])
-    {:noreply, assign(socket, :meetings, attendee.meetings)}
+    user = Core.Repo.preload(socket.assigns.user, attendees: :meeting)
+    {:noreply, assign(socket, :attendees, user.attendees)}
   end
 
   @impl true
   def handle_event("create_meeting", _params, socket) do
-    {:ok, meeting_attendee} =
+    {:ok, attendee} =
       Core.Repo.transact(fn ->
         meeting = Meetings.create_meeting!(%{title: "Untitled"})
-
-        # TODO: move this part to `Core.Meetings`
-        meeting_attendee =
-          %Core.Meetings.MeetingsAttendees{role: :admin, available_days: []}
-          |> Ecto.Changeset.change()
-          |> Ecto.Changeset.put_assoc(:meeting, meeting)
-          |> Ecto.Changeset.put_assoc(:attendee, socket.assigns.attendee)
-          |> Core.Repo.insert!()
-
-        {:ok, meeting_attendee}
+        attendee = Meetings.add_attendee_to_meeting!(meeting, socket.assigns.user)
+        {:ok, Core.Repo.preload(attendee, :meeting)}
       end)
-      |> dbg()
 
-    {:noreply,
-     push_navigate(socket, to: ~p"/meetings/#{meeting_attendee.meeting.id}", replace: true)}
+    {:noreply, push_navigate(socket, to: ~p"/meetings/#{attendee.meeting.id}", replace: true)}
   end
 end

@@ -1,22 +1,22 @@
-defmodule CoreWeb.Plugs.RequireAttendee do
+defmodule CoreWeb.Plugs.RequireCurrentUser do
   @behaviour Plug
 
   import Plug.Conn
-  alias Core.Meetings
+  alias Core.Auth
 
   @impl true
   def init(opts), do: opts
 
   @impl true
   def call(%Plug.Conn{} = conn, _opts) do
-    attendee =
+    user =
       conn
-      |> get_session(:attendee)
+      |> get_session(:user)
       |> case do
-        nil -> Meetings.create_attendee!(%{name: "Unknown"})
+        nil -> Auth.create_user!(%{name: "Unknown"})
         existing -> Core.Repo.reload(existing)
       end
 
-    put_session(conn, :attendee, attendee)
+    put_session(conn, :user, user)
   end
 end

@@ -5,20 +5,18 @@
 </.button>
 
 <section class="grid grid-cols-3 gap-4 mt-4">
-  <%= for meeting <- @meetings do %>
-    <article id={"meeting-#{meeting.id}"} class="p-4 rounded-xl border flex flex-col">
-      <h2 class="font-semibold text-lg">
-        {if meeting.title != "", do: meeting.title, else: "Untitled"}
-      </h2>
-
-      <ul
-        id={"meeting-#{meeting.id}-attendees"}
-        class="text-muted-foreground list-disc list-inside mt-2"
-      >
-        <li :for={attendee <- meeting.attendees}>{attendee.name}</li>
-      </ul>
-
-      <.link navigate={~p"/meetings/#{meeting.id}"} class="w-fit ml-auto mt-auto">
+  <%= for attendee <- @attendees do %>
+    <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">
+      <h2 class="font-semibold text-lg mb-2">{attendee.meeting.title}</h2>
+      <div class="grid grid-cols-7 gap-x-1 w-fit mb-4">
+        <div
+          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
+          data-selected={day_number in attendee.available_days && "true"}
+          class="size-4 rounded-sm transition-colors bg-neutral-200 data-[selected='true']:bg-green-400"
+        >
+        </div>
+      </div>
+      <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="w-fit ml-auto mt-auto">
         <.button variant="secondary">
           Go to meeting <.icon name="hero-chevron-right" class="size-4 -translate-y-px" />
         </.button>

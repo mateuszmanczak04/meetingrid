@@ -13,8 +13,8 @@ defmodule Core.Meetings.Invitation do
 
   def changeset(invitation, attrs) do
     invitation
-    |> cast(attrs, [:meeting_id, :code, :role])
-    |> validate_required([:meeting_id, :code, :role])
+    |> cast(attrs, [:code, :role])
+    |> validate_required([:code, :role])
     |> assoc_constraint(:meeting)
   end
 end

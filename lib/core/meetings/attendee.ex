@@ -2,20 +2,21 @@ defmodule Core.Meetings.Attendee do
   use Ecto.Schema
   import Ecto.Changeset
 
-  # Users do not register/login but are rememembered by cookies
-
   schema "attendees" do
-    field :name, :string
+    field :available_days, {:array, :integer}, default: []
+    field :role, Ecto.Enum, values: [:user, :admin], default: :user
 
-    has_many :meetings_attendees, Core.Meetings.MeetingsAttendees
-    has_many :meetings, through: [:meetings_attendees, :meeting]
+    belongs_to :meeting, Core.Meetings.Meeting, on_replace: :delete
+    belongs_to :user, Core.Auth.User, on_replace: :delete
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(attendee, attrs) do
     attendee
-    |> cast(attrs, [:name])
-    |> validate_required([:name])
+    |> cast(attrs, [:available_days, :role])
+    |> validate_required([:available_days, :role])
+    |> assoc_constraint(:meeting)
+    |> assoc_constraint(:user)
   end
 end

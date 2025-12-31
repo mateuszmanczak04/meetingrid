@@ -3,7 +3,11 @@
     "allow": [
       "Bash(mv:*)",
       "Bash(mix test:*)",
-      "Bash(mix compile:*)"
+      "Bash(mix compile:*)",
+      "Bash(mix ecto.gen.migration:*)",
+      "Bash(mix ecto.migrate:*)",
+      "Bash(mix ecto.rollback:*)",
+      "Bash(git add:*)"
     ]
   }
 }
