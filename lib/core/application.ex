@@ -14,8 +14,7 @@ defmodule Core.Application do
       {Phoenix.PubSub, name: Core.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Core.Finch},
-      # Start a worker by calling: Core.Worker.start_link(arg)
-      # {Core.Worker, arg},
+      Core.Meetings.MeetingsSupervisor,
       # Start to serve requests, typically the last entry
       CoreWeb.Endpoint
     ]
