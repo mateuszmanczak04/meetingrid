@@ -3,6 +3,11 @@ defmodule Core.Meetings.MeetingServer do
   alias Core.Meetings
 
   defmodule State do
+    @moduledoc """
+    State of the current meeting. It's shared between all attendees.
+    """
+
+    @enforce_keys [:meeting, :common_days]
     defstruct [:meeting, :common_days]
   end
 

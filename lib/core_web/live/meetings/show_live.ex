@@ -23,7 +23,7 @@ defmodule CoreWeb.Meetings.ShowLive do
         current_attendee =
           case Meetings.get_attendee_by(meeting_id: meeting_id, user_id: socket.assigns.user.id) do
             nil ->
-              Meetings.add_attendee_to_meeting!(meeting, socket.assigns.user)
+              Meetings.create_attendee!(meeting, socket.assigns.user, %{role: :user})
 
             attendee ->
               attendee

@@ -46,9 +46,11 @@ defmodule Core.Meetings do
     |> Repo.preload(preload)
   end
 
-  def create_attendee!(attrs \\ %{}) do
+  def create_attendee!(%Meeting{} = meeting, %Core.Auth.User{} = user, attrs \\ %{}) do
     %Attendee{}
     |> Attendee.changeset(attrs)
+    |> Ecto.Changeset.put_assoc(:meeting, meeting)
+    |> Ecto.Changeset.put_assoc(:user, user)
     |> Repo.insert!()
   end
 
@@ -92,22 +94,5 @@ defmodule Core.Meetings do
 
   def delete_invitation!(%Invitation{} = invitation) do
     Repo.delete!(invitation)
-  end
-
-  def add_attendee_to_meeting!(%Meeting{} = meeting, %Core.Auth.User{} = user, attrs \\ %{}) do
-    # Check if this is the first attendee (creator)
-    is_first =
-      Repo.aggregate(from(a in Attendee, where: a.meeting_id == ^meeting.id), :count) == 0
-
-    attrs =
-      attrs
-      |> Map.put_new(:role, if(is_first, do: :admin, else: :user))
-      |> Map.put_new(:available_days, [])
-
-    %Attendee{}
-    |> Attendee.changeset(attrs)
-    |> Ecto.Changeset.put_assoc(:meeting, meeting)
-    |> Ecto.Changeset.put_assoc(:user, user)
-    |> Repo.insert!()
   end
 end

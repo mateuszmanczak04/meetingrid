@@ -19,7 +19,7 @@ defmodule CoreWeb.Meetings.IndexLive do
     {:ok, attendee} =
       Core.Repo.transact(fn ->
         meeting = Meetings.create_meeting!(%{title: "Untitled"})
-        attendee = Meetings.add_attendee_to_meeting!(meeting, socket.assigns.user)
+        attendee = Meetings.create_attendee!(meeting, socket.assigns.user, %{role: :admin})
         {:ok, Core.Repo.preload(attendee, :meeting)}
       end)
 
