@@ -7,20 +7,17 @@
 <section class="grid grid-cols-3 gap-4 mt-4">
   <%= for attendee <- @attendees do %>
     <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">
-      <h2 class="font-semibold text-lg mb-2">{attendee.meeting.title}</h2>
-      <div class="grid grid-cols-7 gap-x-1 w-fit mb-4">
-        <div
+      <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="hover:underline">
+        <h2 class="font-semibold text-lg mb-2">{attendee.meeting.title}</h2>
+      </.link>
+      <ul class="grid grid-cols-7 gap-x-1 w-fit mb-4">
+        <li
           :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
           data-selected={day_number in attendee.available_days && "true"}
           class="size-4 rounded-sm transition-colors bg-neutral-200 data-[selected='true']:bg-green-400"
         >
-        </div>
-      </div>
-      <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="w-fit ml-auto mt-auto">
-        <.button variant="secondary">
-          Go to meeting <.icon name="hero-chevron-right" class="size-4 -translate-y-px" />
-        </.button>
-      </.link>
+        </li>
+      </ul>
     </article>
   <% end %>
 </section>
