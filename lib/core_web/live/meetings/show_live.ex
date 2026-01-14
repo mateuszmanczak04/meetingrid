@@ -132,6 +132,6 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   def handle_event("delete", %{}, socket) when is_admin(socket) do
     Meetings.delete_meeting!(socket.assigns.meeting)
-    {:noreply, socket}
+    {:noreply, push_navigate(socket, to: ~p"/meetings")}
   end
 end
