@@ -1,7 +1,6 @@
 defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
   alias Core.Meetings
-  alias Phoenix.LiveView.JS
   alias Core.Meetings.MeetingServer
   import CoreWeb.Meetings.Guards
 
@@ -80,16 +79,6 @@ defmodule CoreWeb.Meetings.ShowLive do
     MeetingServer.refresh(meeting.id)
 
     {:noreply, assign(socket, :current_attendee, current_attendee)}
-  end
-
-  @impl true
-  def handle_event("share", _params, socket) do
-    {:noreply,
-     put_flash(
-       socket,
-       :info,
-       "URL has been copied to the clipboard. You can now send it to your friend :)"
-     )}
   end
 
   @impl true
