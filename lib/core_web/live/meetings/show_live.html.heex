@@ -62,7 +62,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr :for={attendee <- @meeting.attendees} data-attendee={to_string(attendee.id)}>
+    <tr :for={attendee <- @attendees} data-attendee={to_string(attendee.id)}>
       <td class="text-nowrap truncate overflow-hidden">
         <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
         <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
@@ -73,7 +73,7 @@
         data-day={day_number}
         data-selected={day_number in attendee.available_days && "true"}
         class="transition-colors data-[selected='true']:bg-green-400"
-        phx-click={attendee.id == @current_attendee.id && "choose_day"}
+        phx-click={attendee.id == @current_attendee.id && "toggle_day"}
         phx-value-day_number={day_number}
       >
       </td>
@@ -92,11 +92,11 @@
           :if={@current_attendee.id != attendee.id}
           variant="secondary"
           size="xs"
-          phx-click="change_role"
+          phx-click="update_role"
           phx-value-attendee_id={attendee.id}
-          id={"change_role-#{attendee.id}"}
+          id={"update_role-#{attendee.id}"}
         >
-          {if attendee.role == :admin, do: "Remove admin", else: "Add admin"}
+          {if attendee.role == :admin, do: "Remove admin", else: "Make admin"}
         </.button>
       </td>
     </tr>
