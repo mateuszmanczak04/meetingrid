@@ -3,7 +3,7 @@ up:
 	mix ecto.migrate
 
 server:
-	mix phx.server
+	iex -S mix phx.server
 
 check: 
 	MIX_ENV=test mix format --check-formatted
