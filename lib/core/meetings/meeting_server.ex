@@ -119,11 +119,17 @@ defmodule Core.Meetings.MeetingServer do
 
   @impl true
   def handle_cast({:leave_meeting, current_attendee}, state) do
-    # TODO: delete entire meeting when all attendees leave
     Meetings.delete_attendee!(current_attendee)
     new_state = reload_state(state)
-    broadcast(new_state.meeting, {:state_updated, new_state})
-    {:noreply, new_state}
+
+    if length(new_state.attendees) == 0 do
+      Meetings.delete_meeting!(state.meeting)
+      broadcast(state.meeting, :meeting_deleted)
+      {:stop, {:normal, :meeting_deleted}, state}
+    else
+      broadcast(new_state.meeting, {:state_updated, new_state})
+      {:noreply, new_state}
+    end
   end
 
   @impl true
