@@ -16,7 +16,5 @@ defmodule Core.Meetings.Attendee do
     attendee
     |> cast(attrs, [:available_days, :role])
     |> validate_required([:available_days, :role])
-    |> assoc_constraint(:meeting)
-    |> assoc_constraint(:user)
   end
 end

@@ -4,9 +4,12 @@ defmodule Core.Meetings.MeetingServer do
   and all LiveView processes that manage user connections are clients connecting
   to it. It should be running only when at least one meeting attendee is
   present online, otherwise should terminate.
+
+  IMPORTANT: Registry key for the meeting_id is integer, not string!
+  Remember to do `String.to_integer(meeting_id)` when reading URL params.
   """
 
-  use GenServer
+  use GenServer, restart: :transient
   alias Core.Repo
   alias Core.Meetings
   alias Core.Auth.User
@@ -14,102 +17,104 @@ defmodule Core.Meetings.MeetingServer do
 
   defstruct [:meeting, :common_days, :attendees]
 
-  @doc """
-  Call as a newly-joined attendee to immediately get the full state and
-  inform the rest of people about joining.
-  """
-  def join_meeting(meeting_id, %User{} = user) do
-    {:ok, _pid} = ensure_started(meeting_id)
-    GenServer.call(via_tuple(meeting_id), {:join_meeting, user})
-  end
+  @registry_name Core.Meetings.Registry
+  @dynamic_supervisor_name Core.Meetings.DynamicSupervisor
+  def registry_name, do: @registry_name
+  def dynamic_supervisor_name, do: @dynamic_supervisor_name
 
-  @doc """
-  Call when updates available days. Database concerns are resolved inside of this.
-  """
-  def update_available_days(meeting_id, %Attendee{} = current_attendee, [_ | _] = days) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:update_available_days, current_attendee, days})
-  end
-
-  @doc """
-  Call only as an admin to update role of other attendees.
-  """
-  def update_role(
-        meeting_id,
-        %Attendee{} = current_attendee,
-        %Attendee{} = attendee_to_update,
-        role
-      ) do
-    ensure_started(meeting_id)
-
-    GenServer.cast(
-      via_tuple(meeting_id),
-      {:update_role, current_attendee, attendee_to_update, role}
-    )
-  end
-
-  @doc """
-  E.g. update meeting's title.
-  """
-  def update_meeting(meeting_id, %Attendee{} = current_attendee, %{} = attrs) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:update_meeting, current_attendee, attrs})
-  end
-
-  @doc """
-  Call after user presses "Leave" button.
-  It's all about DB belonging and not being currently online.
-  """
-  def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:leave_meeting, current_attendee})
-  end
-
-  @doc """
-  Call it only as an admin to kick some other attendee.
-  """
-  def kick_attendee(meeting_id, %Attendee{} = current_attendee, %Attendee{} = attendee_to_kick) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:kick_attendee, current_attendee, attendee_to_kick})
-  end
-
-  @doc """
-  Call after meeting admin presses "Delete meeting" button.
-  """
-  def delete_meeting(meeting_id) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), :delete_meeting)
-  end
+  # Public API
 
   def start_link(meeting_id) do
     GenServer.start_link(__MODULE__, meeting_id, name: via_tuple(meeting_id))
   end
 
+  def check_if_already_joined(meeting_id, %User{} = user) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.call(via_tuple(meeting_id), {:check_if_already_joined, user})
+  end
+
+  def join_meeting(meeting_id, %User{} = user) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.call(via_tuple(meeting_id), {:join_meeting, user})
+  end
+
+  def update_available_days(meeting_id, %Attendee{} = current_attendee, days)
+      when is_list(days) do
+    ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:update_available_days, current_attendee, days})
+  end
+
+  def update_attendee_role(
+        meeting_id,
+        %Attendee{} = current_attendee,
+        %Attendee{} = attendee_to_update,
+        role
+      )
+      when role in [:admin, :user] do
+    ensure_started(meeting_id)
+
+    GenServer.cast(
+      via_tuple(meeting_id),
+      {:update_attendee_role, current_attendee, attendee_to_update, role}
+    )
+  end
+
+  def update_meeting(meeting_id, %Attendee{} = current_attendee, %{} = attrs) do
+    ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:update_meeting, current_attendee, attrs})
+  end
+
+  def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
+    ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:leave_meeting, current_attendee})
+  end
+
+  def kick_attendee(meeting_id, %Attendee{} = current_attendee, %Attendee{} = attendee_to_kick) do
+    ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:kick_attendee, current_attendee, attendee_to_kick})
+  end
+
+  def delete_meeting(meeting_id, %Attendee{} = current_attendee) do
+    ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:delete_meeting, current_attendee})
+  end
+
+  # Callbacks
+
   @impl true
   def init(meeting_id) do
-    case Meetings.get_meeting(meeting_id, preload: [attendees: :user]) do
+    case Meetings.get_meeting(meeting_id) do
       nil ->
         {:error, :meeting_not_found}
 
       meeting ->
-        attendees = meeting.attendees
+        attendees = Meetings.list_meeting_attendees(meeting, preload: [:user])
         common_days = get_common_days(attendees)
+
         {:ok, %__MODULE__{meeting: meeting, common_days: common_days, attendees: attendees}}
     end
   end
 
   @impl true
-  def handle_call({:join_meeting, user}, _from, %{meeting: meeting} = state) do
-    attendee =
-      case Meetings.get_attendee_by(meeting_id: meeting.id, user_id: user.id) do
-        nil -> Meetings.create_attendee!(meeting, user)
-        %Attendee{} = attendee -> attendee
-      end
+  def handle_call({:check_if_already_joined, user}, _from, state) do
+    case Enum.find(state.attendees, &(&1.user.id == user.id)) do
+      nil -> {:reply, {false, state}, state}
+      %Attendee{} = current_attendee -> {:reply, {current_attendee, state}, state}
+    end
+  end
 
-    new_state = reload_state(state)
+  @impl true
+  def handle_call({:join_meeting, user}, _from, state) do
+    case Meetings.get_attendee_by(meeting_id: state.meeting.id, user_id: user.id) do
+      nil ->
+        current_attendee = Meetings.create_attendee!(state.meeting, user)
+        new_state = reload_state(state)
+        broadcast(new_state.meeting, {:state_updated, new_state})
+        {:reply, %{current_attendee: current_attendee, state: new_state}, new_state}
 
-    broadcast(meeting, {:state_updated, new_state})
-    {:reply, %{current_attendee: attendee, state: new_state}, new_state}
+      %Attendee{} = current_attendee ->
+        {:reply, %{current_attendee: current_attendee, state: state}, state}
+    end
   end
 
   @impl true
@@ -117,72 +122,79 @@ defmodule Core.Meetings.MeetingServer do
     # TODO: delete entire meeting when all attendees leave
     Meetings.delete_attendee!(current_attendee)
     new_state = reload_state(state)
-    broadcast(state.meeting, {:state_updated, new_state})
-    {:noreply, state}
+    broadcast(new_state.meeting, {:state_updated, new_state})
+    {:noreply, new_state}
   end
 
   @impl true
   def handle_cast({:update_available_days, current_attendee, days}, state) do
     Meetings.update_attendee!(current_attendee, %{available_days: days})
     new_state = reload_state(state)
-    broadcast(state.meeting, {:state_updated, new_state})
+    broadcast(new_state.meeting, {:state_updated, new_state})
     {:noreply, new_state}
   end
 
   @impl true
-  def handle_cast({:update_role, _current_attendee, attendee_to_update, role}, state) do
-    # TODO: check permission
-    Meetings.update_attendee!(attendee_to_update, %{role: role})
-    new_state = reload_state(state)
-    broadcast(state.meeting, {:state_updated, new_state})
-    {:noreply, new_state}
+  def handle_cast({:update_attendee_role, current_attendee, attendee_to_update, role}, state) do
+    if current_attendee.role == :admin do
+      Meetings.update_attendee!(attendee_to_update, %{role: role})
+      new_state = reload_state(state)
+      broadcast(new_state.meeting, {:state_updated, new_state})
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
   end
 
   @impl true
-  def handle_cast({:update_meeting, _current_attendee, attrs}, state) do
-    # TODO: check permission
-    Meetings.update_meeting!(state.meeting, attrs)
-    new_state = reload_state(state)
-    broadcast(state.meeting, {:state_updated, new_state})
-    {:noreply, new_state}
+  def handle_cast({:update_meeting, current_attendee, attrs}, state) do
+    if current_attendee.role == :admin do
+      Meetings.update_meeting!(state.meeting, attrs)
+      new_state = reload_state(state)
+      broadcast(new_state.meeting, {:state_updated, new_state})
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
   end
 
   @impl true
-  def handle_cast({:kick_attendee, _current_attendee, attendee_to_kick}, state) do
-    # TODO: check permission
-    Meetings.delete_attendee!(attendee_to_kick)
-    new_state = reload_state(state)
-    broadcast(state.meeting, {:state_updated, new_state})
-    {:noreply, state}
+  def handle_cast({:kick_attendee, current_attendee, attendee_to_kick}, state) do
+    if current_attendee.role == :admin do
+      Meetings.delete_attendee!(attendee_to_kick)
+      new_state = reload_state(state)
+      broadcast(new_state.meeting, {:state_updated, new_state})
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
   end
 
   @impl true
-  def handle_cast(:delete_meeting, %{meeting: meeting} = state) do
-    Meetings.delete_meeting!(meeting)
-    broadcast(meeting, :meeting_deleted)
-    # TODO: stop when no people online too, not only when deleting meeting permantently
-    {:stop, {:shutdown, :meeting_deleted}, state}
-  end
-
-  @impl true
-  def terminate(_reason, _state) do
-    :ok
+  def handle_cast({:delete_meeting, current_attendee}, state) do
+    if current_attendee.role == :admin do
+      Meetings.delete_meeting!(state.meeting)
+      broadcast(state.meeting, :meeting_deleted)
+      {:stop, {:normal, :meeting_deleted}, state}
+    else
+      {:noreply, state}
+    end
   end
 
   # Private utilities
 
   defp via_tuple(meeting_id) do
-    {:via, Registry, {Meetings.Registry, meeting_id}}
+    {:via, Registry, {@registry_name, meeting_id}}
   end
 
   defp ensure_started(meeting_id) do
-    case Registry.lookup(Meetings.Registry, meeting_id) do
+    case Registry.lookup(@registry_name, meeting_id) do
       [{pid, _value}] ->
         {:ok, pid}
 
       [] ->
         DynamicSupervisor.start_child(
-          Meetings.DynamicSupervisor,
+          @dynamic_supervisor_name,
           {__MODULE__, meeting_id}
         )
     end
@@ -209,14 +221,9 @@ defmodule Core.Meetings.MeetingServer do
   end
 
   defp reload_state(%__MODULE__{meeting: meeting}) do
-    meeting =
-      meeting
-      |> Repo.reload()
-      |> Repo.preload(attendees: :user)
-
-    attendees = meeting.attendees
+    meeting = Repo.reload(meeting)
+    attendees = Meetings.list_meeting_attendees(meeting, preload: [:user])
     common_days = get_common_days(attendees)
-
     %__MODULE__{meeting: meeting, common_days: common_days, attendees: attendees}
   end
 end

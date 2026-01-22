@@ -8,8 +8,14 @@ defmodule Core.Meetings.MeetingsSupervisor do
   @impl true
   def init(_init_arg) do
     children = [
-      {Registry, keys: :unique, name: Core.Meetings.Registry},
-      {DynamicSupervisor, strategy: :one_for_one, name: Core.Meetings.DynamicSupervisor}
+      {
+        Registry,
+        name: Core.Meetings.MeetingServer.registry_name(), keys: :unique
+      },
+      {
+        DynamicSupervisor,
+        name: Core.Meetings.MeetingServer.dynamic_supervisor_name(), strategy: :one_for_one
+      }
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

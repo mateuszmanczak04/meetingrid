@@ -9,6 +9,10 @@ defmodule Core.Auth.User do
 
     has_many :attendees, Core.Meetings.Attendee
 
+    many_to_many :meetings, Core.Meetings.Meeting,
+      join_through: Core.Meetings.Attendee,
+      unique: true
+
     timestamps(type: :utc_datetime)
   end
 

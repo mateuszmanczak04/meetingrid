@@ -1,28 +1,26 @@
 defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
-  alias Core.Meetings
-  alias Core.Meetings.Meeting
   alias Core.Meetings.MeetingServer
   import CoreWeb.Meetings.Guards
 
   @impl true
   def mount(%{"id" => meeting_id}, %{"user" => user}, socket) do
-    # TODO: think about checking if connected?(socket)
-    case Meetings.get_meeting(meeting_id) do
-      nil ->
-        {:ok, push_navigate(socket, to: ~p"/meetings")}
+    meeting_id = String.to_integer(meeting_id)
 
-      %Meeting{} = _meeting ->
+    case MeetingServer.check_if_already_joined(meeting_id, user) do
+      {false, _state} ->
+        {:ok, push_navigate(socket, to: ~p"/meetings/#{meeting_id}/join")}
+
+      {current_attendee, state} ->
         Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
 
-        %{current_attendee: current_attendee, state: state} =
-          MeetingServer.join_meeting(meeting_id, user)
+        ordered_attendees = order_attendees(state.attendees, current_attendee)
 
         {:ok,
          socket
          |> assign(:current_attendee, current_attendee)
          |> assign(:meeting, state.meeting)
-         |> assign(:attendees, state.meeting.attendees)
+         |> assign(:attendees, ordered_attendees)
          |> assign(:common_days, state.common_days)}
     end
   end
@@ -30,7 +28,7 @@ defmodule CoreWeb.Meetings.ShowLive do
   @impl true
   def handle_info({:state_updated, state}, socket) do
     missing_attendees =
-      Enum.filter(socket.assigns.meeting.attendees, fn a ->
+      Enum.filter(socket.assigns.attendees, fn a ->
         a.id not in Enum.map(state.attendees, & &1.id)
       end)
 
@@ -48,15 +46,7 @@ defmodule CoreWeb.Meetings.ShowLive do
           put_flash(s, :info, "#{a.user.name} left or was kicked")
         end)
 
-      # current_attendee first, then alphabetically case insensitive
-      ordered_attendees =
-        Enum.sort(state.attendees, fn a1, a2 ->
-          case {a1, a2} do
-            {^current_attendee, _} -> true
-            {_, ^current_attendee} -> false
-            {a1, a2} -> String.downcase(a1.user.name) <= String.downcase(a2.user.name)
-          end
-        end)
+      ordered_attendees = order_attendees(state.attendees, current_attendee)
 
       {:noreply,
        socket
@@ -92,12 +82,12 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("update_role", %{"attendee_id" => attendee_id}, socket)
+  def handle_event("update_attendee_role", %{"attendee_id" => attendee_id}, socket)
       when is_admin(socket) do
     attendee_to_update =
-      Enum.find(socket.assigns.meeting.attendees, &(to_string(&1.id) == attendee_id))
+      Enum.find(socket.assigns.attendees, &(to_string(&1.id) == attendee_id))
 
-    MeetingServer.update_role(
+    MeetingServer.update_attendee_role(
       socket.assigns.meeting.id,
       socket.assigns.current_attendee,
       attendee_to_update,
@@ -127,7 +117,7 @@ defmodule CoreWeb.Meetings.ShowLive do
   @impl true
   def handle_event("kick", %{"attendee_id" => attendee_id}, socket) when is_admin(socket) do
     attendee_to_kick =
-      Enum.find(socket.assigns.meeting.attendees, &(to_string(&1.id) === attendee_id))
+      Enum.find(socket.assigns.attendees, &(to_string(&1.id) === attendee_id))
 
     MeetingServer.kick_attendee(
       socket.assigns.meeting.id,
@@ -140,7 +130,17 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   @impl true
   def handle_event("delete", %{}, socket) when is_admin(socket) do
-    MeetingServer.delete_meeting(socket.assigns.meeting.id)
+    MeetingServer.delete_meeting(socket.assigns.meeting.id, socket.assigns.current_attendee)
     {:noreply, socket}
+  end
+
+  defp order_attendees(attendees, current_attendee) do
+    Enum.sort(attendees, fn a1, a2 ->
+      case {a1, a2} do
+        {^current_attendee, _} -> true
+        {_, ^current_attendee} -> false
+        {a1, a2} -> String.downcase(a1.user.name) <= String.downcase(a2.user.name)
+      end
+    end)
   end
 end

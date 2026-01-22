@@ -15,6 +15,5 @@ defmodule Core.Meetings.Invitation do
     invitation
     |> cast(attrs, [:code, :role])
     |> validate_required([:code, :role])
-    |> assoc_constraint(:meeting)
   end
 end

@@ -30,6 +30,15 @@ defmodule Core.Meetings do
     Repo.delete!(meeting)
   end
 
+  def list_meeting_attendees(%Meeting{} = meeting, opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+
+    meeting
+    |> Ecto.assoc(:attendees)
+    |> Repo.all()
+    |> Repo.preload(preload)
+  end
+
   def get_attendee(id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
 

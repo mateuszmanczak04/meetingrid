@@ -92,9 +92,9 @@
           :if={@current_attendee.id != attendee.id}
           variant="secondary"
           size="xs"
-          phx-click="update_role"
+          phx-click="update_attendee_role"
           phx-value-attendee_id={attendee.id}
-          id={"update_role-#{attendee.id}"}
+          id={"update_attendee_role-#{attendee.id}"}
         >
           {if attendee.role == :admin, do: "Remove admin", else: "Make admin"}
         </.button>

@@ -8,6 +8,10 @@ defmodule Core.Meetings.Meeting do
     has_many :attendees, Core.Meetings.Attendee
     has_many :invitations, Core.Meetings.Invitation
 
+    many_to_many :users, Core.Auth.User,
+      join_through: Core.Meetings.Attendee,
+      unique: true
+
     timestamps(type: :utc_datetime)
   end
 
