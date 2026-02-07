@@ -10,12 +10,16 @@ defmodule Core.Meetings.MeetingServer do
   """
 
   use GenServer, restart: :transient
-  alias Core.Repo
   alias Core.Meetings
   alias Core.Auth.User
   alias Core.Meetings.Attendee
 
   defstruct [:meeting, :common_days, :attendees]
+
+  @type state :: %__MODULE__{}
+  @type id :: pos_integer()
+  @type role :: :user | :admin
+  @type day :: 0 | 1 | 2 | 3 | 4 | 5 | 6
 
   @registry_name Core.Meetings.Registry
   @dynamic_supervisor_name Core.Meetings.DynamicSupervisor
@@ -24,26 +28,36 @@ defmodule Core.Meetings.MeetingServer do
 
   # Public API
 
+  @spec start_link(id()) :: GenServer.on_start()
   def start_link(meeting_id) do
     GenServer.start_link(__MODULE__, meeting_id, name: via_tuple(meeting_id))
   end
 
+  @spec check_if_already_joined(id(), User.t()) :: {false, state()} | {Attendee.t(), state()}
   def check_if_already_joined(meeting_id, %User{} = user) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:check_if_already_joined, user})
   end
 
+  @spec join_meeting(id(), User.t()) :: :ok
   def join_meeting(meeting_id, %User{} = user) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:join_meeting, user})
   end
 
-  def update_available_days(meeting_id, %Attendee{} = current_attendee, days)
-      when is_list(days) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:update_available_days, current_attendee, days})
+  @spec leave_meeting(id(), Attendee.t()) :: :ok
+  def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.call(via_tuple(meeting_id), {:leave_meeting, current_attendee})
   end
 
+  @spec toggle_available_day(id(), Attendee.t(), day()) :: :ok
+  def toggle_available_day(meeting_id, %Attendee{} = current_attendee, day_number) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:toggle_available_day, current_attendee, day_number})
+  end
+
+  @spec update_attendee_role(id(), Attendee.t(), Attendee.t(), role()) :: :ok
   def update_attendee_role(
         meeting_id,
         %Attendee{} = current_attendee,
@@ -51,7 +65,7 @@ defmodule Core.Meetings.MeetingServer do
         role
       )
       when role in [:admin, :user] do
-    ensure_started(meeting_id)
+    {:ok, _pid} = ensure_started(meeting_id)
 
     GenServer.cast(
       via_tuple(meeting_id),
@@ -59,23 +73,21 @@ defmodule Core.Meetings.MeetingServer do
     )
   end
 
-  def update_meeting(meeting_id, %Attendee{} = current_attendee, %{} = attrs) do
-    ensure_started(meeting_id)
+  @spec update_meeting(id(), Attendee.t(), map()) :: :ok
+  def update_meeting(meeting_id, %Attendee{} = current_attendee, attrs) do
+    {:ok, _pid} = ensure_started(meeting_id)
     GenServer.cast(via_tuple(meeting_id), {:update_meeting, current_attendee, attrs})
   end
 
-  def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
-    ensure_started(meeting_id)
-    GenServer.cast(via_tuple(meeting_id), {:leave_meeting, current_attendee})
-  end
-
+  @spec kick_attendee(id(), Attendee.t(), Attendee.t()) :: :ok
   def kick_attendee(meeting_id, %Attendee{} = current_attendee, %Attendee{} = attendee_to_kick) do
-    ensure_started(meeting_id)
+    {:ok, _pid} = ensure_started(meeting_id)
     GenServer.cast(via_tuple(meeting_id), {:kick_attendee, current_attendee, attendee_to_kick})
   end
 
+  @spec delete_meeting(id(), Attendee.t()) :: :ok
   def delete_meeting(meeting_id, %Attendee{} = current_attendee) do
-    ensure_started(meeting_id)
+    {:ok, _pid} = ensure_started(meeting_id)
     GenServer.cast(via_tuple(meeting_id), {:delete_meeting, current_attendee})
   end
 
@@ -84,106 +96,88 @@ defmodule Core.Meetings.MeetingServer do
   @impl true
   def init(meeting_id) do
     case Meetings.get_meeting(meeting_id) do
-      nil ->
-        {:error, :meeting_not_found}
-
-      meeting ->
-        attendees = Meetings.list_meeting_attendees(meeting, preload: [:user])
-        common_days = get_common_days(attendees)
-
-        {:ok, %__MODULE__{meeting: meeting, common_days: common_days, attendees: attendees}}
+      nil -> {:error, :meeting_not_found}
+      meeting -> {:ok, reload_state(meeting.id)}
     end
   end
 
   @impl true
   def handle_call({:check_if_already_joined, user}, _from, state) do
-    case Enum.find(state.attendees, &(&1.user.id == user.id)) do
-      nil -> {:reply, {false, state}, state}
+    case Meetings.check_if_already_joined(user, state.meeting) do
       %Attendee{} = current_attendee -> {:reply, {current_attendee, state}, state}
+      false -> {:reply, {false, state}, state}
     end
   end
 
   @impl true
-  def handle_call({:join_meeting, user}, _from, state) do
-    case Meetings.get_attendee_by(meeting_id: state.meeting.id, user_id: user.id) do
-      nil ->
-        current_attendee = Meetings.create_attendee!(state.meeting, user)
-        new_state = reload_state(state)
-        broadcast(new_state.meeting, {:state_updated, new_state})
-        {:reply, %{current_attendee: current_attendee, state: new_state}, new_state}
-
-      %Attendee{} = current_attendee ->
-        {:reply, %{current_attendee: current_attendee, state: state}, state}
+  def handle_call({:join_meeting, current_user}, _from, state) do
+    case Meetings.join_meeting(current_user, state.meeting, %{name: "Unknown"}) do
+      {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting.id)}
+      {:error, _} -> {:noreply, state}
     end
   end
 
   @impl true
-  def handle_cast({:leave_meeting, current_attendee}, state) do
-    Meetings.delete_attendee!(current_attendee)
-    new_state = reload_state(state)
+  def handle_call({:leave_meeting, current_attendee}, from, state) do
+    case Meetings.leave_meeting(current_attendee) do
+      {:ok, :leave} ->
+        {:reply, :ok, reload_and_broadcast(state.meeting.id)}
 
-    if length(new_state.attendees) == 0 do
-      Meetings.delete_meeting!(state.meeting)
-      broadcast(state.meeting, :meeting_deleted)
-      {:stop, {:normal, :meeting_deleted}, state}
-    else
-      broadcast(new_state.meeting, {:state_updated, new_state})
-      {:noreply, new_state}
+      {:ok, :terminate} ->
+        broadcast(state.meeting.id, :meeting_deleted)
+        GenServer.reply(from, :ok)
+        {:stop, :shutdown, state}
+
+      {:error, _} ->
+        {:noreply, state}
     end
   end
 
   @impl true
-  def handle_cast({:update_available_days, current_attendee, days}, state) do
-    Meetings.update_attendee!(current_attendee, %{available_days: days})
-    new_state = reload_state(state)
-    broadcast(new_state.meeting, {:state_updated, new_state})
-    {:noreply, new_state}
+  def handle_cast({:toggle_available_day, current_attendee, day_number}, state) do
+    case Meetings.toggle_available_day(current_attendee, day_number) do
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:error, _} -> {:noreply, state}
+    end
   end
 
   @impl true
   def handle_cast({:update_attendee_role, current_attendee, attendee_to_update, role}, state) do
-    if current_attendee.role == :admin do
-      Meetings.update_attendee!(attendee_to_update, %{role: role})
-      new_state = reload_state(state)
-      broadcast(new_state.meeting, {:state_updated, new_state})
-      {:noreply, new_state}
-    else
-      {:noreply, state}
+    case Meetings.update_attendee_role(current_attendee, attendee_to_update, role) do
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:error, _} -> {:noreply, state}
     end
   end
 
   @impl true
   def handle_cast({:update_meeting, current_attendee, attrs}, state) do
-    if current_attendee.role == :admin do
-      Meetings.update_meeting!(state.meeting, attrs)
-      new_state = reload_state(state)
-      broadcast(new_state.meeting, {:state_updated, new_state})
-      {:noreply, new_state}
-    else
-      {:noreply, state}
+    case Meetings.update_meeting(current_attendee, state.meeting, attrs) do
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:error, _} -> {:noreply, state}
     end
   end
 
   @impl true
   def handle_cast({:kick_attendee, current_attendee, attendee_to_kick}, state) do
-    if current_attendee.role == :admin do
-      Meetings.delete_attendee!(attendee_to_kick)
-      new_state = reload_state(state)
-      broadcast(new_state.meeting, {:state_updated, new_state})
-      {:noreply, new_state}
-    else
-      {:noreply, state}
+    case Meetings.kick_attendee(current_attendee, attendee_to_kick) do
+      {:ok, _} ->
+        broadcast_to_attendee(attendee_to_kick.id, :you_were_kicked)
+        {:noreply, reload_and_broadcast(state.meeting.id)}
+
+      {:error, _} ->
+        {:noreply, state}
     end
   end
 
   @impl true
   def handle_cast({:delete_meeting, current_attendee}, state) do
-    if current_attendee.role == :admin do
-      Meetings.delete_meeting!(state.meeting)
-      broadcast(state.meeting, :meeting_deleted)
-      {:stop, {:normal, :meeting_deleted}, state}
-    else
-      {:noreply, state}
+    case Meetings.delete_meeting(current_attendee, state.meeting) do
+      {:ok, _} ->
+        broadcast(state.meeting.id, :meeting_deleted)
+        {:stop, :shutdown, state}
+
+      {:error, _} ->
+        {:noreply, state}
     end
   end
 
@@ -206,10 +200,25 @@ defmodule Core.Meetings.MeetingServer do
     end
   end
 
-  defp broadcast(meeting, payload) do
+  @spec reload_and_broadcast(id()) :: state()
+  defp reload_and_broadcast(meeting_id) do
+    state = reload_state(meeting_id)
+    broadcast(meeting_id, {:state_updated, state})
+    state
+  end
+
+  defp broadcast(meeting_id, payload) do
     Phoenix.PubSub.broadcast(
       Core.PubSub,
-      "meeting:#{meeting.id}",
+      "meeting:#{meeting_id}",
+      payload
+    )
+  end
+
+  defp broadcast_to_attendee(attendee_id, payload) do
+    Phoenix.PubSub.broadcast(
+      Core.PubSub,
+      "attendee:#{attendee_id}",
       payload
     )
   end
@@ -218,6 +227,7 @@ defmodule Core.Meetings.MeetingServer do
     []
   end
 
+  @spec get_common_days([Attendee.t()]) :: [day()]
   defp get_common_days(attendees) do
     attendees
     |> Enum.map(& &1.available_days)
@@ -226,10 +236,19 @@ defmodule Core.Meetings.MeetingServer do
     |> MapSet.to_list()
   end
 
-  defp reload_state(%__MODULE__{meeting: meeting}) do
-    meeting = Repo.reload(meeting)
-    attendees = Meetings.list_meeting_attendees(meeting, preload: [:user])
+  @spec reload_state(id()) :: state()
+  defp reload_state(meeting_id) do
+    meeting = Meetings.get_meeting(meeting_id)
+
+    attendees =
+      Meetings.list_meeting_attendees(
+        meeting,
+        preload: [:user],
+        order_by: [:id]
+      )
+
     common_days = get_common_days(attendees)
+
     %__MODULE__{meeting: meeting, common_days: common_days, attendees: attendees}
   end
 end

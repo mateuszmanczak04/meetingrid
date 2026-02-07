@@ -1,7 +1,6 @@
 defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
-  import CoreWeb.Meetings.Guards
 
   @impl true
   def mount(%{"id" => meeting_id}, %{"user" => user}, socket) do
@@ -13,48 +12,39 @@ defmodule CoreWeb.Meetings.ShowLive do
 
       {current_attendee, state} ->
         Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
-
-        ordered_attendees = order_attendees(state.attendees, current_attendee)
+        Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{current_attendee.id}")
 
         {:ok,
          socket
          |> assign(:current_attendee, current_attendee)
          |> assign(:meeting, state.meeting)
-         |> assign(:attendees, ordered_attendees)
+         |> assign(:attendees, state.attendees)
          |> assign(:common_days, state.common_days)}
     end
   end
 
   @impl true
   def handle_info({:state_updated, state}, socket) do
-    missing_attendees =
-      Enum.filter(socket.assigns.attendees, fn a ->
-        a.id not in Enum.map(state.attendees, & &1.id)
-      end)
+    current_attendee =
+      Enum.find(
+        state.attendees,
+        &(&1.id === socket.assigns.current_attendee.id)
+      )
 
-    if socket.assigns.current_attendee in missing_attendees do
-      {:noreply,
-       socket
-       |> put_flash(:error, "You left or were kicked from the meeting")
-       |> push_navigate(to: ~p"/meetings")}
-    else
-      current_attendee =
-        Enum.find(state.attendees, &(&1.id === socket.assigns.current_attendee.id))
+    {:noreply,
+     socket
+     |> assign(:meeting, state.meeting)
+     |> assign(:attendees, state.attendees)
+     |> assign(:common_days, state.common_days)
+     |> assign(:current_attendee, current_attendee)}
+  end
 
-      socket =
-        Enum.reduce(missing_attendees, socket, fn a, s ->
-          put_flash(s, :info, "#{a.user.name} left or was kicked")
-        end)
-
-      ordered_attendees = order_attendees(state.attendees, current_attendee)
-
-      {:noreply,
-       socket
-       |> assign(:meeting, state.meeting)
-       |> assign(:attendees, ordered_attendees)
-       |> assign(:common_days, state.common_days)
-       |> assign(:current_attendee, current_attendee)}
-    end
+  @impl true
+  def handle_info(:you_were_kicked, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "You were kicked from the meeting")
+     |> push_navigate(to: ~p"/meetings")}
   end
 
   @impl true
@@ -66,24 +56,18 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("toggle_day", %{"day_number" => day_number}, socket) do
-    %{meeting: meeting, current_attendee: current_attendee} = socket.assigns
-
-    available_days =
-      if String.to_integer(day_number) in current_attendee.available_days do
-        current_attendee.available_days -- [String.to_integer(day_number)]
-      else
-        [String.to_integer(day_number) | current_attendee.available_days]
-      end
-
-    MeetingServer.update_available_days(meeting.id, current_attendee, available_days)
+  def handle_event("toggle_available_day", %{"day_number" => day_number}, socket) do
+    MeetingServer.toggle_available_day(
+      socket.assigns.meeting.id,
+      socket.assigns.current_attendee,
+      String.to_integer(day_number)
+    )
 
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("update_attendee_role", %{"attendee_id" => attendee_id}, socket)
-      when is_admin(socket) do
+  def handle_event("update_attendee_role", %{"attendee_id" => attendee_id}, socket) do
     attendee_to_update =
       Enum.find(socket.assigns.attendees, &(to_string(&1.id) == attendee_id))
 
@@ -98,7 +82,7 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("update_meeting", %{"title" => title}, socket) when is_admin(socket) do
+  def handle_event("update_meeting", %{"title" => title}, socket) do
     MeetingServer.update_meeting(
       socket.assigns.meeting.id,
       socket.assigns.current_attendee,
@@ -110,12 +94,20 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   @impl true
   def handle_event("leave", _params, socket) do
-    MeetingServer.leave_meeting(socket.assigns.meeting.id, socket.assigns.current_attendee)
-    {:noreply, socket}
+    :ok =
+      MeetingServer.leave_meeting(
+        socket.assigns.meeting.id,
+        socket.assigns.current_attendee
+      )
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "You've left the meeting")
+     |> push_navigate(to: ~p"/meetings")}
   end
 
   @impl true
-  def handle_event("kick", %{"attendee_id" => attendee_id}, socket) when is_admin(socket) do
+  def handle_event("kick_attendee", %{"attendee_id" => attendee_id}, socket) do
     attendee_to_kick =
       Enum.find(socket.assigns.attendees, &(to_string(&1.id) === attendee_id))
 
@@ -129,18 +121,12 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("delete", %{}, socket) when is_admin(socket) do
-    MeetingServer.delete_meeting(socket.assigns.meeting.id, socket.assigns.current_attendee)
-    {:noreply, socket}
-  end
+  def handle_event("delete", _, socket) do
+    MeetingServer.delete_meeting(
+      socket.assigns.meeting.id,
+      socket.assigns.current_attendee
+    )
 
-  defp order_attendees(attendees, current_attendee) do
-    Enum.sort(attendees, fn a1, a2 ->
-      case {a1, a2} do
-        {^current_attendee, _} -> true
-        {_, ^current_attendee} -> false
-        {a1, a2} -> String.downcase(a1.user.name) <= String.downcase(a2.user.name)
-      end
-    end)
+    {:noreply, socket}
   end
 end

@@ -2,6 +2,8 @@ defmodule Core.Meetings.Meeting do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{}
+
   schema "meetings" do
     field :title, :string
 
@@ -15,9 +17,16 @@ defmodule Core.Meetings.Meeting do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(meeting, attrs) do
+  def create_changeset(meeting, attrs) do
     meeting
     |> cast(attrs, [:title])
-    |> validate_required([])
+    |> validate_required([:title])
+    |> validate_length(:title, min: 1, max: 200)
+  end
+
+  def update_changeset(meeting, attrs) do
+    meeting
+    |> cast(attrs, [:title])
+    |> validate_length(:title, min: 1, max: 200)
   end
 end

@@ -4,6 +4,8 @@ defmodule Core.Auth.User do
 
   # Users do not register/login but are remembered by cookies
 
+  @type t :: %__MODULE__{}
+
   schema "users" do
     field :name, :string
 
@@ -16,9 +18,14 @@ defmodule Core.Auth.User do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(user, attrs) do
+  def create_changeset(user, attrs) do
     user
     |> cast(attrs, [:name])
     |> validate_required([:name])
+  end
+
+  def update_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name])
   end
 end

@@ -2,106 +2,169 @@ defmodule Core.Meetings do
   import Ecto.Query, warn: false
   alias Core.Repo
 
+  alias Core.Auth
+
   alias Core.Meetings.Meeting
   alias Core.Meetings.Attendee
-  alias Core.Meetings.Invitation
 
+  @type id :: pos_integer()
+  @type role :: :user | :admin
+  @type day :: 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+  @spec get_meeting(id(), keyword()) :: Meeting.t() | nil
   def get_meeting(id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
 
-    Meeting
-    |> Repo.get(id)
-    |> Repo.preload(preload)
+    case Repo.get(Meeting, id) do
+      nil -> nil
+      meeting -> Repo.preload(meeting, preload)
+    end
   end
 
-  def create_meeting!(attrs \\ %{}) do
-    %Meeting{}
-    |> Meeting.changeset(attrs)
-    |> Repo.insert!()
+  @spec create_meeting(Auth.User.t(), map()) :: {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
+  def create_meeting(%Auth.User{} = current_user, attrs) do
+    Repo.transact(fn ->
+      with {:ok, meeting} <-
+             %Meeting{}
+             |> Meeting.create_changeset(attrs)
+             |> Repo.insert(),
+           {:ok, attendee} <-
+             %Attendee{}
+             |> Attendee.create_changeset(%{role: :admin})
+             |> Ecto.Changeset.put_assoc(:meeting, meeting)
+             |> Ecto.Changeset.put_assoc(:user, current_user)
+             |> Repo.insert() do
+        attendee = Repo.preload(attendee, :meeting)
+        {:ok, attendee}
+      end
+    end)
   end
 
-  def update_meeting!(%Meeting{} = meeting, attrs) do
-    meeting
-    |> Meeting.changeset(attrs)
-    |> Repo.update!()
+  @spec update_meeting(Attendee.t(), Meeting.t(), map()) ::
+          {:ok, Meeting.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
+  def update_meeting(%Attendee{} = current_attendee, %Meeting{} = meeting, attrs) do
+    with :ok <- ensure_is_admin(current_attendee) do
+      meeting
+      |> Meeting.update_changeset(attrs)
+      |> Repo.update()
+    end
   end
 
-  def delete_meeting!(%Meeting{} = meeting) do
-    Repo.delete!(meeting)
+  @spec delete_meeting(Meeting.t()) :: {:ok, Meeting.t()} | {:error, Ecto.Changeset.t()}
+  def delete_meeting(%Meeting{} = meeting) do
+    Repo.delete(meeting)
   end
 
+  @spec delete_meeting(Attendee.t(), Meeting.t()) ::
+          {:ok, Meeting.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
+  def delete_meeting(%Attendee{} = current_attendee, %Meeting{} = meeting) do
+    with :ok <- ensure_is_admin(current_attendee) do
+      Repo.delete(meeting)
+    end
+  end
+
+  @spec list_meeting_attendees(Meeting.t(), keyword()) :: [Attendee.t()]
+  @spec list_meeting_attendees(Meeting.t()) :: [Attendee.t()]
   def list_meeting_attendees(%Meeting{} = meeting, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
+    order_by = Keyword.get(opts, :order_by, [])
 
     meeting
     |> Ecto.assoc(:attendees)
+    |> order_by(^order_by)
     |> Repo.all()
     |> Repo.preload(preload)
   end
 
-  def get_attendee(id, opts \\ []) do
-    preload = Keyword.get(opts, :preload, [])
-
-    Attendee
-    |> Repo.get(id)
-    |> Repo.preload(preload)
-  end
-
+  @spec get_attendee_by(keyword(), keyword()) :: Attendee.t() | nil
+  @spec get_attendee_by(keyword()) :: Attendee.t() | nil
   def get_attendee_by(clauses, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
 
-    Attendee
-    |> Repo.get_by(clauses)
-    |> Repo.preload(preload)
+    case Repo.get_by(Attendee, clauses) do
+      nil -> nil
+      attendee -> Repo.preload(attendee, preload)
+    end
   end
 
-  def create_attendee!(%Meeting{} = meeting, %Core.Auth.User{} = user, attrs \\ %{}) do
+  @spec check_if_already_joined(Auth.User.t(), Meeting.t()) :: Attendee.t() | false
+  def check_if_already_joined(%Auth.User{} = user, %Meeting{} = meeting) do
+    case get_attendee_by(user_id: user.id, meeting_id: meeting.id) do
+      nil -> false
+      %Attendee{} = current_attendee -> current_attendee
+    end
+  end
+
+  @spec join_meeting(Auth.User.t(), Meeting.t(), map()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
+  def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting, attrs) do
     %Attendee{}
-    |> Attendee.changeset(attrs)
+    |> Attendee.create_changeset(attrs)
     |> Ecto.Changeset.put_assoc(:meeting, meeting)
-    |> Ecto.Changeset.put_assoc(:user, user)
-    |> Repo.insert!()
+    |> Ecto.Changeset.put_assoc(:user, current_user)
+    |> Repo.insert()
   end
 
-  def update_attendee!(%Attendee{} = attendee, attrs) do
-    attendee
-    |> Attendee.changeset(attrs)
-    |> Repo.update!()
+  @spec update_attendee_role(Attendee.t(), Attendee.t(), role()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
+  def update_attendee_role(
+        %Attendee{} = current_attendee,
+        %Attendee{} = attendee_to_update,
+        role
+      ) do
+    with :ok <- ensure_is_admin(current_attendee) do
+      attendee_to_update
+      |> Attendee.update_changeset(%{role: role})
+      |> Repo.update()
+    end
   end
 
-  def delete_attendee!(%Attendee{} = attendee) do
-    Repo.delete!(attendee)
+  @spec toggle_available_day(Attendee.t(), day()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
+  def toggle_available_day(%Attendee{} = current_attendee, day_number) do
+    available_days =
+      if day_number in current_attendee.available_days do
+        current_attendee.available_days -- [day_number]
+      else
+        [day_number | current_attendee.available_days]
+      end
+
+    current_attendee
+    |> Attendee.update_changeset(%{available_days: available_days})
+    |> Repo.update()
   end
 
-  def get_invitation(id, opts \\ []) do
-    preload = Keyword.get(opts, :preload, [])
+  @spec leave_meeting(Attendee.t()) ::
+          {:ok, :leave} | {:ok, :terminate} | {:error, Ecto.Changeset.t()}
+  def leave_meeting(%Attendee{} = current_attendee) do
+    Repo.transact(fn ->
+      meeting = get_meeting(current_attendee.meeting_id, preload: :attendees)
 
-    Invitation
-    |> Repo.get(id)
-    |> Repo.preload(preload)
+      if length(meeting.attendees) == 1 do
+        Repo.delete(meeting)
+        {:ok, :terminate}
+      else
+        Repo.delete(current_attendee)
+        {:ok, :leave}
+      end
+    end)
   end
 
-  def get_invitation_by(clauses, opts \\ []) do
-    preload = Keyword.get(opts, :preload, [])
-
-    Invitation
-    |> Repo.get_by(clauses)
-    |> Repo.preload(preload)
+  @spec kick_attendee(Attendee.t(), Attendee.t()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :unauthorized | :unallowed_on_self}
+  def kick_attendee(%Attendee{} = current_attendee, %Attendee{} = attendee_to_kick) do
+    with :ok <- ensure_is_admin(current_attendee),
+         :ok <- ensure_is_not_self(current_attendee, attendee_to_kick) do
+      Repo.delete(attendee_to_kick)
+    end
   end
 
-  def create_invitation!(attrs \\ %{}) do
-    %Invitation{}
-    |> Invitation.changeset(attrs)
-    |> Repo.insert!()
-  end
+  defp ensure_is_admin(%Attendee{role: :admin}), do: :ok
+  defp ensure_is_admin(%Attendee{} = _attendee), do: {:error, :unauthorized}
 
-  def update_invitation!(%Invitation{} = invitation, attrs) do
-    invitation
-    |> Invitation.changeset(attrs)
-    |> Repo.update!()
-  end
+  defp ensure_is_not_self(%Attendee{} = current, %Attendee{} = other) when current == other,
+    do: {:error, :unallowed_on_self}
 
-  def delete_invitation!(%Invitation{} = invitation) do
-    Repo.delete!(invitation)
-  end
+  defp ensure_is_not_self(%Attendee{}, %Attendee{}),
+    do: :ok
 end

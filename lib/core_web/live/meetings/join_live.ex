@@ -30,8 +30,8 @@ defmodule CoreWeb.Meetings.JoinLive do
   end
 
   @impl true
-  def handle_event("join", %{}, socket) do
-    %{} = MeetingServer.join_meeting(socket.assigns.meeting.id, socket.assigns.user)
+  def handle_event("join", _, socket) do
+    :ok = MeetingServer.join_meeting(socket.assigns.meeting.id, socket.assigns.user)
     {:noreply, push_navigate(socket, to: ~p"/meetings/#{socket.assigns.meeting.id}")}
   end
 end
