@@ -153,7 +153,7 @@ defmodule Core.Meetings do
   defp ensure_is_admin(%Attendee{role: :admin}), do: :ok
   defp ensure_is_admin(%Attendee{} = _attendee), do: {:error, :unauthorized}
 
-  defp ensure_is_not_self(%Attendee{} = current, %Attendee{} = other) when current == other,
+  defp ensure_is_not_self(%Attendee{} = current, %Attendee{} = other) when current.id == other.id,
     do: {:error, :unallowed_on_self}
 
   defp ensure_is_not_self(%Attendee{}, %Attendee{}),
