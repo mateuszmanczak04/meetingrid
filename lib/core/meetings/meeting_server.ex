@@ -38,13 +38,13 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.call(via_tuple(meeting_id), {:check_if_already_joined, user})
   end
 
-  @spec join_meeting(Meeting.id(), User.t()) :: :ok
+  @spec join_meeting(Meeting.id(), User.t()) :: :ok | :error
   def join_meeting(meeting_id, %User{} = user) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:join_meeting, user})
   end
 
-  @spec leave_meeting(Meeting.id(), Attendee.t()) :: :ok
+  @spec leave_meeting(Meeting.id(), Attendee.t()) :: :ok | :error
   def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:leave_meeting, current_attendee})
@@ -112,7 +112,7 @@ defmodule Core.Meetings.MeetingServer do
   def handle_call({:join_meeting, current_user}, _from, state) do
     case Meetings.join_meeting(current_user, state.meeting, %{role: :user, available_days: []}) do
       {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting.id)}
-      {:error, _} -> {:noreply, state}
+      {:error, _} -> {:reply, :error, state}
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Core.Meetings.MeetingServer do
         {:stop, :shutdown, state}
 
       {:error, _} ->
-        {:noreply, state}
+        {:reply, :error, state}
     end
   end
 
@@ -187,15 +187,12 @@ defmodule Core.Meetings.MeetingServer do
   end
 
   defp ensure_started(meeting_id) do
-    case Registry.lookup(@registry_name, meeting_id) do
-      [{pid, _value}] ->
-        {:ok, pid}
-
-      [] ->
-        DynamicSupervisor.start_child(
-          @dynamic_supervisor_name,
-          {__MODULE__, meeting_id}
-        )
+    case DynamicSupervisor.start_child(
+           @dynamic_supervisor_name,
+           {__MODULE__, meeting_id}
+         ) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
     end
   end
 
