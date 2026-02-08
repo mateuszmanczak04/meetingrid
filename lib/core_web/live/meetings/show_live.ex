@@ -94,16 +94,23 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   @impl true
   def handle_event("leave", _params, socket) do
-    :ok =
-      MeetingServer.leave_meeting(
-        socket.assigns.meeting.id,
-        socket.assigns.current_attendee
-      )
+    case MeetingServer.leave_meeting(
+           socket.assigns.meeting.id,
+           socket.assigns.current_attendee
+         ) do
+      :ok ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "You've left the meeting")
+         |> push_navigate(to: ~p"/meetings")}
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "You've left the meeting")
-     |> push_navigate(to: ~p"/meetings")}
+      {:error, :last_admin_cant_leave} ->
+        {:noreply,
+         put_flash(socket, :error, "You can't leave the meeting while being the only admin")}
+
+      :error ->
+        {:noreply, put_flash(socket, :error, "Unknown error occurred")}
+    end
   end
 
   @impl true

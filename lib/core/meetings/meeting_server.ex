@@ -44,7 +44,8 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.call(via_tuple(meeting_id), {:join_meeting, user})
   end
 
-  @spec leave_meeting(Meeting.id(), Attendee.t()) :: :ok | :error
+  @spec leave_meeting(Meeting.id(), Attendee.t()) ::
+          :ok | :error | {:error, :last_admin_cant_leave}
   def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:leave_meeting, current_attendee})
@@ -117,15 +118,13 @@ defmodule Core.Meetings.MeetingServer do
   end
 
   @impl true
-  def handle_call({:leave_meeting, current_attendee}, from, state) do
+  def handle_call({:leave_meeting, current_attendee}, _from, state) do
     case Meetings.leave_meeting(current_attendee) do
       {:ok, :leave} ->
         {:reply, :ok, reload_and_broadcast(state.meeting.id)}
 
-      {:ok, :terminate} ->
-        broadcast(state.meeting.id, :meeting_deleted)
-        GenServer.reply(from, :ok)
-        {:stop, :shutdown, state}
+      {:error, :last_admin_cant_leave} ->
+        {:reply, {:error, :last_admin_cant_leave}, state}
 
       {:error, _} ->
         {:reply, :error, state}
