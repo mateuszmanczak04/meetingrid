@@ -7,11 +7,7 @@ defmodule Core.Meetings do
   alias Core.Meetings.Meeting
   alias Core.Meetings.Attendee
 
-  @type id :: pos_integer()
-  @type role :: :user | :admin
-  @type day :: 0 | 1 | 2 | 3 | 4 | 5 | 6
-
-  @spec get_meeting(id(), keyword()) :: Meeting.t() | nil
+  @spec get_meeting(Meeting.id(), keyword()) :: Meeting.t() | nil
   def get_meeting(id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
 
@@ -26,11 +22,11 @@ defmodule Core.Meetings do
     Repo.transact(fn ->
       with {:ok, meeting} <-
              %Meeting{}
-             |> Meeting.create_changeset(attrs)
+             |> Meeting.changeset(attrs)
              |> Repo.insert(),
            {:ok, attendee} <-
              %Attendee{}
-             |> Attendee.create_changeset(%{role: :admin})
+             |> Attendee.changeset(%{role: :admin, available_days: []})
              |> Ecto.Changeset.put_assoc(:meeting, meeting)
              |> Ecto.Changeset.put_assoc(:user, current_user)
              |> Repo.insert() do
@@ -45,14 +41,9 @@ defmodule Core.Meetings do
   def update_meeting(%Attendee{} = current_attendee, %Meeting{} = meeting, attrs) do
     with :ok <- ensure_is_admin(current_attendee) do
       meeting
-      |> Meeting.update_changeset(attrs)
+      |> Meeting.changeset(attrs)
       |> Repo.update()
     end
-  end
-
-  @spec delete_meeting(Meeting.t()) :: {:ok, Meeting.t()} | {:error, Ecto.Changeset.t()}
-  def delete_meeting(%Meeting{} = meeting) do
-    Repo.delete(meeting)
   end
 
   @spec delete_meeting(Attendee.t(), Meeting.t()) ::
@@ -99,13 +90,13 @@ defmodule Core.Meetings do
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting, attrs) do
     %Attendee{}
-    |> Attendee.create_changeset(attrs)
+    |> Attendee.changeset(attrs)
     |> Ecto.Changeset.put_assoc(:meeting, meeting)
     |> Ecto.Changeset.put_assoc(:user, current_user)
     |> Repo.insert()
   end
 
-  @spec update_attendee_role(Attendee.t(), Attendee.t(), role()) ::
+  @spec update_attendee_role(Attendee.t(), Attendee.t(), Attendee.role()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :unauthorized}
   def update_attendee_role(
         %Attendee{} = current_attendee,
@@ -114,12 +105,12 @@ defmodule Core.Meetings do
       ) do
     with :ok <- ensure_is_admin(current_attendee) do
       attendee_to_update
-      |> Attendee.update_changeset(%{role: role})
+      |> Attendee.changeset(%{role: role})
       |> Repo.update()
     end
   end
 
-  @spec toggle_available_day(Attendee.t(), day()) ::
+  @spec toggle_available_day(Attendee.t(), Attendee.day()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def toggle_available_day(%Attendee{} = current_attendee, day_number) do
     available_days =
@@ -130,7 +121,7 @@ defmodule Core.Meetings do
       end
 
     current_attendee
-    |> Attendee.update_changeset(%{available_days: available_days})
+    |> Attendee.changeset(%{available_days: available_days})
     |> Repo.update()
   end
 

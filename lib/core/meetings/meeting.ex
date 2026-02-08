@@ -3,6 +3,7 @@ defmodule Core.Meetings.Meeting do
   import Ecto.Changeset
 
   @type t :: %__MODULE__{}
+  @type id :: pos_integer()
 
   schema "meetings" do
     field :title, :string
@@ -17,16 +18,10 @@ defmodule Core.Meetings.Meeting do
     timestamps(type: :utc_datetime)
   end
 
-  def create_changeset(meeting, attrs) do
+  def changeset(meeting, attrs) do
     meeting
     |> cast(attrs, [:title])
     |> validate_required([:title])
-    |> validate_length(:title, min: 1, max: 200)
-  end
-
-  def update_changeset(meeting, attrs) do
-    meeting
-    |> cast(attrs, [:title])
-    |> validate_length(:title, min: 1, max: 200)
+    |> validate_length(:title, max: 200)
   end
 end
