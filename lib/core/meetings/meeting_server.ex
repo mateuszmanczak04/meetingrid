@@ -110,7 +110,7 @@ defmodule Core.Meetings.MeetingServer do
 
   @impl true
   def handle_call({:join_meeting, current_user}, _from, state) do
-    case Meetings.join_meeting(current_user, state.meeting, %{name: "Unknown", available_days: []}) do
+    case Meetings.join_meeting(current_user, state.meeting, %{role: :user, available_days: []}) do
       {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting.id)}
       {:error, _} -> {:noreply, state}
     end
@@ -222,12 +222,14 @@ defmodule Core.Meetings.MeetingServer do
     )
   end
 
-  defp get_common_days([]) do
+  @doc false
+  def get_common_days([]) do
     []
   end
 
+  @doc false
   @spec get_common_days([Attendee.t()]) :: [Attendee.day()]
-  defp get_common_days(attendees) do
+  def get_common_days(attendees) do
     attendees
     |> Enum.map(& &1.available_days)
     |> Enum.map(&MapSet.new/1)
@@ -235,8 +237,9 @@ defmodule Core.Meetings.MeetingServer do
     |> MapSet.to_list()
   end
 
+  @doc false
   @spec reload_state(Meeting.id()) :: state()
-  defp reload_state(meeting_id) do
+  def reload_state(meeting_id) do
     meeting = Meetings.get_meeting(meeting_id)
 
     attendees =
