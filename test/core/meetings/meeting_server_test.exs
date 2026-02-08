@@ -5,16 +5,17 @@ defmodule Core.Meetings.MeetingServerTest do
   alias Core.Meetings.MeetingServer
   alias Core.Meetings
 
-  test "server shuts down when last attendee leaves" do
+  test "server shuts down when deleting meeting" do
     user = insert!(:user)
     meeting = insert!(:meeting)
-    attendee = insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+    admin = insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [])
 
-    {_, _} = MeetingServer.check_if_already_joined(meeting.id, user)
+    MeetingServer.check_if_already_joined(meeting.id, user)
+
     [{pid, _}] = Registry.lookup(MeetingServer.registry_name(), meeting.id)
     ref = Process.monitor(pid)
 
-    MeetingServer.leave_meeting(meeting.id, attendee)
+    MeetingServer.delete_meeting(meeting.id, admin)
 
     assert_receive {:DOWN, ^ref, :process, ^pid, :shutdown}
   end
@@ -59,8 +60,7 @@ defmodule Core.Meetings.MeetingServerTest do
     updated = Meetings.get_attendee_by(id: attendee.id)
     assert 1 in updated.available_days
 
-    MeetingServer.leave_meeting(meeting.id, updated)
-    assert nil == Meetings.get_meeting(meeting.id)
+    assert :ok = MeetingServer.leave_meeting(meeting.id, updated)
   end
 
   test "invalid operations don't crash server" do

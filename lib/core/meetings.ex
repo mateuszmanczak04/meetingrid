@@ -126,17 +126,27 @@ defmodule Core.Meetings do
   end
 
   @spec leave_meeting(Attendee.t()) ::
-          {:ok, :leave} | {:ok, :terminate} | {:error, Ecto.Changeset.t()}
+          {:ok, :leave}
+          | {:error, :last_admin_cant_leave}
+          | {:error, Ecto.Changeset.t()}
   def leave_meeting(%Attendee{} = current_attendee) do
     Repo.transact(fn ->
       meeting = get_meeting(current_attendee.meeting_id, preload: :attendees)
 
-      if length(meeting.attendees) == 1 do
-        Repo.delete(meeting)
-        {:ok, :terminate}
-      else
-        Repo.delete(current_attendee)
-        {:ok, :leave}
+      case current_attendee.role do
+        :admin ->
+          how_many_admins = Enum.count(meeting.attendees, &(&1.role == :admin))
+
+          if how_many_admins == 1 do
+            {:error, :last_admin_cant_leave}
+          else
+            Repo.delete(current_attendee)
+            {:ok, :leave}
+          end
+
+        :user ->
+          Repo.delete(current_attendee)
+          {:ok, :leave}
       end
     end)
   end

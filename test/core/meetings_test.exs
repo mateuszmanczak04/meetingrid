@@ -315,16 +315,16 @@ defmodule Core.MeetingsTest do
   end
 
   describe "leave_meeting/1" do
-    test "deletes meeting when last attendee leaves" do
+    test "doesn't allow leaving as a last admin" do
       user = insert!(:user)
       meeting = insert!(:meeting)
 
       attendee =
         insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
 
-      assert {:ok, :terminate} = Meetings.leave_meeting(attendee)
+      assert {:error, :last_admin_cant_leave} = Meetings.leave_meeting(attendee)
 
-      assert nil == Meetings.get_meeting(meeting.id)
+      assert Meetings.get_meeting(meeting.id)
     end
 
     test "only deletes attendee when others remain" do
