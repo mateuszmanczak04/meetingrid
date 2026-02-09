@@ -18,7 +18,7 @@ defmodule Core.Meetings.Attendee do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(attendee, attrs) do
+  def changeset(%__MODULE__{} = attendee, attrs) do
     attendee
     |> cast(attrs, [:available_days, :role])
     |> validate_required([:available_days, :role])

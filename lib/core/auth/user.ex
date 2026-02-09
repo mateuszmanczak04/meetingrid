@@ -19,7 +19,7 @@ defmodule Core.Auth.User do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(user, attrs) do
+  def changeset(%__MODULE__{} = user, attrs) do
     user
     |> cast(attrs, [:name])
     |> validate_required([:name])
