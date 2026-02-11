@@ -14,12 +14,22 @@ defmodule CoreWeb.Meetings.ShowLive do
         Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
         Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{current_attendee.id}")
 
-        {:ok,
-         socket
-         |> assign(:current_attendee, current_attendee)
-         |> assign(:meeting, state.meeting)
-         |> assign(:attendees, state.attendees)
-         |> assign(:common_days, state.common_days)}
+        case state.meeting.config.mode do
+          :week ->
+            {:ok,
+             socket
+             |> assign(:current_attendee, current_attendee)
+             |> assign(:meeting, state.meeting)
+             |> assign(:attendees, state.attendees)
+             |> assign(:common_days, state.common_days)}
+
+          :day ->
+            {:ok,
+             socket
+             |> assign(:current_attendee, current_attendee)
+             |> assign(:meeting, state.meeting)
+             |> assign(:attendees, state.attendees)}
+        end
     end
   end
 

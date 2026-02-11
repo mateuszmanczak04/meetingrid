@@ -50,7 +50,7 @@
   <thead>
     <tr>
       <th class="bg-gray-100 w-40">Attendee</th>
-      <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
+      <%= for {text, index} <- Enum.with_index(if @meeting.config.include_weekends, do: ~w(Mon Tue Wed Thu Fri Sat Sun), else: ~w(Mon Tue Wed Thu Fri)) do %>
         <th
           data-day={index}
           data-match={index in @common_days && "true"}
@@ -72,7 +72,7 @@
         {attendee.user.name}
       </td>
       <td
-        :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
+        :for={day_number <- if @meeting.config.include_weekends, do: 0..6, else: 0..4}
         data-day={day_number}
         data-selected={day_number in attendee.available_days && "true"}
         class="transition-colors data-[selected='true']:bg-green-400"
