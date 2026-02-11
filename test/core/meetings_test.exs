@@ -31,7 +31,11 @@ defmodule Core.MeetingsTest do
     test "creates meeting and adds creator as admin" do
       user = insert!(:user)
 
-      assert {:ok, attendee} = Meetings.create_meeting(user, %{title: "Team Sync"})
+      assert {:ok, attendee} =
+               Meetings.create_meeting(user, %{
+                 "title" => "Team Sync",
+                 "config" => %{"mode" => "week", "include_weekends" => true}
+               })
 
       assert attendee.role == :admin
       assert attendee.user_id == user.id

@@ -11,7 +11,8 @@ defmodule Core.Factory do
 
   def build(:meeting) do
     %Core.Meetings.Meeting{
-      title: "meeting#{System.unique_integer()}"
+      title: "meeting#{System.unique_integer()}",
+      config: %Core.Meetings.Meeting.Config.Week{mode: :week, include_weekends: true}
     }
   end
 

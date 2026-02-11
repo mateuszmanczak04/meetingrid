@@ -8,6 +8,8 @@ defmodule Core.Meetings.Meeting do
   schema "meetings" do
     field :title, :string
 
+    field :config, Core.Meetings.Meeting.Config
+
     has_many :attendees, Core.Meetings.Attendee
     has_many :invitations, Core.Meetings.Invitation
 
@@ -20,8 +22,8 @@ defmodule Core.Meetings.Meeting do
 
   def changeset(%__MODULE__{} = meeting, attrs) do
     meeting
-    |> cast(attrs, [:title])
-    |> validate_required([:title])
+    |> cast(attrs, [:title, :config])
+    |> validate_required([:title, :config])
     |> validate_length(:title, max: 200)
   end
 end
