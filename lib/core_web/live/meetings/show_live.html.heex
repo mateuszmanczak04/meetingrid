@@ -43,7 +43,10 @@
   </.button>
 </.modal>
 
-<table class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10">
+<table
+  :if={@meeting.config.mode == :week}
+  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
+>
   <thead>
     <tr>
       <th class="bg-gray-100 w-40">Attendee</th>
@@ -102,3 +105,5 @@
     </tr>
   </tbody>
 </table>
+
+<p :if={@meeting.config.mode == :day}>Day mode not supported yet</p>
