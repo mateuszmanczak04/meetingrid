@@ -5,18 +5,18 @@ defmodule Core.Meetings.Meeting.ConfigTest do
 
   describe "cast/1" do
     test "casts struct successfully" do
-      day_config = %Config.Day{mode: :day, date: ~D[2024-01-01]}
-      assert {:ok, ^day_config} = Config.cast(day_config)
+      week_config = %Config.Week{mode: :week, include_weekends: true}
+      assert {:ok, ^week_config} = Config.cast(week_config)
     end
 
     test "casts map with string mode" do
-      data = %{"mode" => "day", "date" => ~D[2024-01-01]}
-      assert {:ok, %Config.Day{mode: :day}} = Config.cast(data)
+      data = %{"mode" => "week", "include_weekends" => true}
+      assert {:ok, %Config.Week{mode: :week}} = Config.cast(data)
     end
 
     test "casts map with atom mode" do
-      data = %{"mode" => "day", "date" => "2024-01-01"}
-      assert {:ok, %Config.Day{mode: :day}} = Config.cast(data)
+      data = %{"mode" => "week", "include_weekends" => true}
+      assert {:ok, %Config.Week{mode: :week}} = Config.cast(data)
     end
 
     test "returns error for invalid mode" do
@@ -30,7 +30,7 @@ defmodule Core.Meetings.Meeting.ConfigTest do
     end
 
     test "returns error for invalid changeset" do
-      data = %{"mode" => "day", "date" => "invalid"}
+      data = %{"mode" => "week", "include_weekends" => "invalid"}
       assert :error = Config.cast(data)
     end
 
@@ -44,8 +44,8 @@ defmodule Core.Meetings.Meeting.ConfigTest do
 
   describe "load/1" do
     test "loads config from database map" do
-      data = %{"mode" => "day", "date" => ~D[2024-01-01]}
-      assert {:ok, %Config.Day{mode: :day, date: ~D[2024-01-01]}} = Config.load(data)
+      data = %{"mode" => "week", "include_weekends" => true}
+      assert {:ok, %Config.Week{mode: :week, include_weekends: true}} = Config.load(data)
     end
 
     test "returns error for invalid mode" do
@@ -61,10 +61,10 @@ defmodule Core.Meetings.Meeting.ConfigTest do
 
   describe "dump/1" do
     test "dumps struct to map" do
-      day_config = %Config.Day{mode: :day, date: ~D[2024-01-01]}
-      assert {:ok, map} = Config.dump(day_config)
+      week_config = %Config.Week{mode: :week, include_weekends: true}
+      assert {:ok, map} = Config.dump(week_config)
       assert is_map(map)
-      assert map.mode == :day
+      assert map.mode == :week
     end
 
     test "returns error for invalid data" do

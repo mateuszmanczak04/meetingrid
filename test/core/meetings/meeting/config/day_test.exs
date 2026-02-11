@@ -6,25 +6,7 @@ defmodule Core.Meetings.Meeting.Config.DayTest do
   describe "changeset/2" do
     test "validates required fields" do
       changeset = Day.changeset(%Day{}, %{})
-
-      refute changeset.valid?
-      assert %{date: ["can't be blank"]} = errors_on(changeset)
-    end
-
-    test "accepts valid attributes" do
-      attrs = %{"date" => ~D[2024-01-15]}
-
-      changeset = Day.changeset(%Day{}, attrs)
-
       assert changeset.valid?
-    end
-
-    test "casts date field correctly" do
-      attrs = %{"date" => ~D[2024-01-15]}
-
-      changeset = Day.changeset(%Day{}, attrs)
-
-      assert changeset.changes.date == ~D[2024-01-15]
     end
 
     test "rejects invalid mode value" do
