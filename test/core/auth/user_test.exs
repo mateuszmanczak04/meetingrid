@@ -5,7 +5,7 @@ defmodule Core.Auth.UserTest do
 
   describe "changeset/2" do
     test "valid with required fields" do
-      changeset = User.changeset(%User{}, %{name: "John Doe"})
+      changeset = User.changeset(%User{}, %{"name" => "John Doe"})
 
       assert changeset.valid?
     end
@@ -18,7 +18,7 @@ defmodule Core.Auth.UserTest do
     end
 
     test "name must be 100 characters or less" do
-      changeset = User.changeset(%User{}, %{name: String.duplicate("a", 101)})
+      changeset = User.changeset(%User{}, %{"name" => String.duplicate("a", 101)})
 
       refute changeset.valid?
       assert "should be at most 100 character(s)" in errors_on(changeset).name

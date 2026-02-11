@@ -7,8 +7,8 @@ defmodule Core.Meetings.AttendeeTest do
     test "valid with all required fields" do
       changeset =
         Attendee.changeset(%Attendee{}, %{
-          role: :user,
-          available_days: [1, 3, 5]
+          "role" => "user",
+          "available_days" => [1, 3, 5]
         })
 
       assert changeset.valid?
@@ -17,22 +17,22 @@ defmodule Core.Meetings.AttendeeTest do
     test "valid with empty available_days" do
       changeset =
         Attendee.changeset(%Attendee{}, %{
-          role: :admin,
-          available_days: []
+          "role" => "admin",
+          "available_days" => []
         })
 
       assert changeset.valid?
     end
 
     test "requires role" do
-      changeset = Attendee.changeset(%Attendee{}, %{available_days: [1]})
+      changeset = Attendee.changeset(%Attendee{}, %{"available_days" => [1]})
 
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).role
     end
 
     test "requires available_days" do
-      changeset = Attendee.changeset(%Attendee{}, %{role: :user})
+      changeset = Attendee.changeset(%Attendee{}, %{"role" => "user"})
 
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).available_days
@@ -41,8 +41,8 @@ defmodule Core.Meetings.AttendeeTest do
     test "rejects invalid role" do
       changeset =
         Attendee.changeset(%Attendee{}, %{
-          role: :moderator,
-          available_days: [1]
+          "role" => "moderator",
+          "available_days" => [1]
         })
 
       refute changeset.valid?
@@ -52,8 +52,8 @@ defmodule Core.Meetings.AttendeeTest do
     test "rejects days outside valid range" do
       changeset =
         Attendee.changeset(%Attendee{}, %{
-          role: :user,
-          available_days: [1, 7]
+          "role" => "user",
+          "available_days" => [1, 7]
         })
 
       refute changeset.valid?
@@ -63,8 +63,8 @@ defmodule Core.Meetings.AttendeeTest do
     test "accepts all valid days" do
       changeset =
         Attendee.changeset(%Attendee{}, %{
-          role: :user,
-          available_days: [0, 1, 2, 3, 4, 5, 6]
+          "role" => "user",
+          "available_days" => [0, 1, 2, 3, 4, 5, 6]
         })
 
       assert changeset.valid?
@@ -74,7 +74,7 @@ defmodule Core.Meetings.AttendeeTest do
     test "valid when updating only role" do
       attendee = %Attendee{available_days: [1, 2], role: :user}
 
-      changeset = Attendee.changeset(attendee, %{role: :admin})
+      changeset = Attendee.changeset(attendee, %{"role" => "admin"})
 
       assert changeset.valid?
       assert changeset.changes == %{role: :admin}

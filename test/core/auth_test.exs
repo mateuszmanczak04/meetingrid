@@ -29,7 +29,7 @@ defmodule Core.AuthTest do
 
   describe "create_user!/1" do
     test "creates user with valid attributes" do
-      attrs = %{name: "Jane Doe"}
+      attrs = %{"name" => "Jane Doe"}
 
       user = Auth.create_user!(attrs)
 
@@ -45,7 +45,7 @@ defmodule Core.AuthTest do
 
     test "raises when name exceeds max length" do
       assert_raise Ecto.InvalidChangesetError, fn ->
-        Auth.create_user!(%{name: String.duplicate("a", 101)})
+        Auth.create_user!(%{"name" => String.duplicate("a", 101)})
       end
     end
   end
@@ -54,7 +54,7 @@ defmodule Core.AuthTest do
     test "updates user with valid attributes" do
       user = insert!(:user, name: "Original")
 
-      updated = Auth.update_user!(user, %{name: "Updated"})
+      updated = Auth.update_user!(user, %{"name" => "Updated"})
 
       assert updated.name == "Updated"
       assert updated.id == user.id
@@ -64,7 +64,7 @@ defmodule Core.AuthTest do
       user = insert!(:user)
 
       assert_raise Ecto.InvalidChangesetError, fn ->
-        Auth.update_user!(user, %{name: nil})
+        Auth.update_user!(user, %{"name" => nil})
       end
     end
   end
