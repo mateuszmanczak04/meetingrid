@@ -1,8 +1,10 @@
 <h1 class="text-4xl font-bold">Your Meetings</h1>
 
-<.button id="create_meeting_button" phx-click="create_meeting" class="mt-4">
-  <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
-</.button>
+<.link navigate={~p"/meetings/new"}>
+  <.button class="mt-4">
+    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
+  </.button>
+</.link>
 
 <section class="grid grid-cols-3 gap-4 mt-4">
   <%= for attendee <- @attendees do %>

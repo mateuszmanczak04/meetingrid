@@ -19,6 +19,7 @@ defmodule CoreWeb.Router do
 
     scope "/meetings", Meetings do
       live "/", IndexLive
+      live "/new", NewLive
 
       scope "/" do
         pipe_through [CoreWeb.Plugs.RequireMeeting]

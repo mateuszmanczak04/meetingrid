@@ -1,0 +1,29 @@
+<.link navigate={~p"/meetings"}>
+  <.button variant="secondary" class="mb-4">
+    <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to meetings list
+  </.button>
+</.link>
+
+<h1 class="font-bold text-4xl mb-4">Create a new meeting</h1>
+
+<form phx-submit="create" class="space-y-4">
+  <div>
+    <label class="block">Title</label>
+    <input type="text" type="text" required name="title" placeholder="Beach party" />
+  </div>
+
+  <div>
+    <label for="mode" class="block">Mode</label>
+    <select name="config[mode]" id="mode">
+      <option value="day">Time of the day</option>
+      <option value="week" selected>Day of the week</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="include_weekends">Include weekends (only for <i>Time of the day</i> mode)</label>
+    <input type="checkbox" name="config[include_weekends]" id="include_weekends" value="true" />
+  </div>
+
+  <button type="submit" class="bg-primary h-10 px-8">Create</button>
+</form>
