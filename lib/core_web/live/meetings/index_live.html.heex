@@ -21,7 +21,7 @@
       <ul :if={attendee.meeting.config.mode == :week} class="grid grid-cols-7 gap-x-1 w-fit mb-4">
         <li
           :for={day_number <- if attendee.meeting.config.include_weekends, do: 0..6, else: 0..4}
-          data-selected={day_number in attendee.available_days && "true"}
+          data-selected={day_number in attendee.config.available_days && "true"}
           class="size-4 rounded-sm transition-colors bg-neutral-200 data-[selected='true']:bg-green-400"
         >
         </li>

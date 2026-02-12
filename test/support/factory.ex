@@ -18,8 +18,11 @@ defmodule Core.Factory do
 
   def build(:attendee) do
     %Core.Meetings.Attendee{
-      available_days: [1, 2],
-      role: :user
+      role: :user,
+      config: %Core.Meetings.Attendee.Config.Week{
+        mode: :week,
+        available_days: []
+      }
     }
   end
 

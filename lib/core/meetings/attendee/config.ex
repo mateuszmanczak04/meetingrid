@@ -1,8 +1,8 @@
-defmodule Core.Meetings.Meeting.Config do
+defmodule Core.Meetings.Attendee.Config do
   use Ecto.Type
 
-  alias Core.Meetings.Meeting.Config.Day
-  alias Core.Meetings.Meeting.Config.Week
+  alias Core.Meetings.Attendee.Config.Day
+  alias Core.Meetings.Attendee.Config.Week
 
   @impl Ecto.Type
   def type(), do: :map
