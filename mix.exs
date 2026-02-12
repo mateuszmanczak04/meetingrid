@@ -59,7 +59,8 @@ defmodule Core.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:argon2_elixir, "~> 4.1"}
+      {:argon2_elixir, "~> 4.1"},
+      {:ecto_erd, "~> 0.6.6"}
     ]
   end
 
@@ -81,7 +82,8 @@ defmodule Core.MixProject do
         "tailwind core --minify",
         "esbuild core --minify",
         "phx.digest"
-      ]
+      ],
+      mermaid: "ecto.gen.erd --output-path=ERD.mmd"
     ]
   end
 end

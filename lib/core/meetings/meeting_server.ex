@@ -15,7 +15,7 @@ defmodule Core.Meetings.MeetingServer do
   alias Core.Meetings.Attendee
   alias Core.Auth.User
 
-  defstruct [:meeting, :common_days, :attendees]
+  defstruct [:meeting, :attendees, :common_days, :common_hours]
 
   @type state :: %__MODULE__{}
 
@@ -51,10 +51,16 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.call(via_tuple(meeting_id), {:leave_meeting, current_attendee})
   end
 
-  @spec toggle_available_day(Meeting.id(), Attendee.t(), Attendee.day()) :: :ok
+  @spec toggle_available_day(Meeting.id(), Attendee.t(), Attendee.Config.Week.day()) :: :ok
   def toggle_available_day(meeting_id, %Attendee{} = current_attendee, day_number) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.cast(via_tuple(meeting_id), {:toggle_available_day, current_attendee, day_number})
+  end
+
+  @spec toggle_available_hour(Meeting.id(), Attendee.t(), Attendee.Config.Day.hour()) :: :ok
+  def toggle_available_hour(meeting_id, %Attendee{} = current_attendee, hour_number) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.cast(via_tuple(meeting_id), {:toggle_available_hour, current_attendee, hour_number})
   end
 
   @spec update_attendee_role(Meeting.id(), Attendee.t(), Attendee.t(), Attendee.role()) :: :ok
@@ -97,7 +103,7 @@ defmodule Core.Meetings.MeetingServer do
   def init(meeting_id) do
     case Meetings.get_meeting(meeting_id) do
       nil -> {:error, :meeting_not_found}
-      meeting -> {:ok, reload_state(meeting.id)}
+      meeting -> {:ok, reload_state(meeting)}
     end
   end
 
@@ -111,8 +117,14 @@ defmodule Core.Meetings.MeetingServer do
 
   @impl true
   def handle_call({:join_meeting, current_user}, _from, state) do
-    case Meetings.join_meeting(current_user, state.meeting, %{role: :user, available_days: []}) do
-      {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting.id)}
+    config =
+      case state.meeting.config.mode do
+        :day -> %{mode: :day, available_hours: []}
+        :week -> %{mode: :week, available_days: []}
+      end
+
+    case Meetings.join_meeting(current_user, state.meeting, %{role: :user, config: config}) do
+      {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting)}
       {:error, _} -> {:reply, :error, state}
     end
   end
@@ -121,7 +133,7 @@ defmodule Core.Meetings.MeetingServer do
   def handle_call({:leave_meeting, current_attendee}, _from, state) do
     case Meetings.leave_meeting(current_attendee) do
       {:ok, :leave} ->
-        {:reply, :ok, reload_and_broadcast(state.meeting.id)}
+        {:reply, :ok, reload_and_broadcast(state.meeting)}
 
       {:error, :last_admin_cant_leave} ->
         {:reply, {:error, :last_admin_cant_leave}, state}
@@ -134,7 +146,15 @@ defmodule Core.Meetings.MeetingServer do
   @impl true
   def handle_cast({:toggle_available_day, current_attendee, day_number}, state) do
     case Meetings.toggle_available_day(current_attendee, day_number) do
-      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting)}
+      {:error, _} -> {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_cast({:toggle_available_hour, current_attendee, hour_number}, state) do
+    case Meetings.toggle_available_hour(current_attendee, hour_number) do
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting)}
       {:error, _} -> {:noreply, state}
     end
   end
@@ -142,7 +162,7 @@ defmodule Core.Meetings.MeetingServer do
   @impl true
   def handle_cast({:update_attendee_role, current_attendee, attendee_to_update, role}, state) do
     case Meetings.update_attendee_role(current_attendee, attendee_to_update, role) do
-      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting)}
       {:error, _} -> {:noreply, state}
     end
   end
@@ -150,7 +170,7 @@ defmodule Core.Meetings.MeetingServer do
   @impl true
   def handle_cast({:update_meeting, current_attendee, attrs}, state) do
     case Meetings.update_meeting(current_attendee, state.meeting, attrs) do
-      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting.id)}
+      {:ok, _} -> {:noreply, reload_and_broadcast(state.meeting)}
       {:error, _} -> {:noreply, state}
     end
   end
@@ -160,7 +180,7 @@ defmodule Core.Meetings.MeetingServer do
     case Meetings.kick_attendee(current_attendee, attendee_to_kick) do
       {:ok, _} ->
         broadcast_to_attendee(attendee_to_kick.id, :you_were_kicked)
-        {:noreply, reload_and_broadcast(state.meeting.id)}
+        {:noreply, reload_and_broadcast(state.meeting)}
 
       {:error, _} ->
         {:noreply, state}
@@ -195,10 +215,10 @@ defmodule Core.Meetings.MeetingServer do
     end
   end
 
-  @spec reload_and_broadcast(Meeting.id()) :: state()
-  defp reload_and_broadcast(meeting_id) do
-    state = reload_state(meeting_id)
-    broadcast(meeting_id, {:state_updated, state})
+  @spec reload_and_broadcast(Meeting.t()) :: state()
+  defp reload_and_broadcast(meeting) do
+    state = reload_state(meeting)
+    broadcast(meeting.id, {:state_updated, state})
     state
   end
 
@@ -218,25 +238,9 @@ defmodule Core.Meetings.MeetingServer do
     )
   end
 
-  @doc false
-  def get_common_days([]) do
-    []
-  end
-
-  @doc false
-  @spec get_common_days([Attendee.t()]) :: [Attendee.day()]
-  def get_common_days(attendees) do
-    attendees
-    |> Enum.map(& &1.available_days)
-    |> Enum.map(&MapSet.new/1)
-    |> Enum.reduce(&MapSet.intersection/2)
-    |> MapSet.to_list()
-  end
-
-  @doc false
-  @spec reload_state(Meeting.id()) :: state()
-  def reload_state(meeting_id) do
-    meeting = Meetings.get_meeting(meeting_id)
+  @spec reload_state(Meeting.t()) :: state()
+  defp reload_state(meeting) do
+    meeting = Meetings.get_meeting(meeting.id)
 
     attendees =
       Meetings.list_meeting_attendees(
@@ -245,8 +249,36 @@ defmodule Core.Meetings.MeetingServer do
         order_by: [:id]
       )
 
-    common_days = get_common_days(attendees)
+    case meeting.config.mode do
+      :week ->
+        common_days = get_common_days(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_days: common_days}
 
-    %__MODULE__{meeting: meeting, common_days: common_days, attendees: attendees}
+      :day ->
+        common_hours = get_common_hours(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_hours: common_hours}
+    end
+  end
+
+  @spec get_common_days([Attendee.t()]) :: [Attendee.Config.Week.day()]
+  defp get_common_days([]), do: []
+
+  defp get_common_days(attendees) do
+    attendees
+    |> Enum.map(& &1.config.available_days)
+    |> Enum.map(&MapSet.new/1)
+    |> Enum.reduce(&MapSet.intersection/2)
+    |> MapSet.to_list()
+  end
+
+  @spec get_common_hours([Attendee.t()]) :: [Attendee.Config.Day.hour()]
+  defp get_common_hours([]), do: []
+
+  defp get_common_hours(attendees) do
+    attendees
+    |> Enum.map(& &1.config.available_hours)
+    |> Enum.map(&MapSet.new/1)
+    |> Enum.reduce(&MapSet.intersection/2)
+    |> MapSet.to_list()
   end
 end

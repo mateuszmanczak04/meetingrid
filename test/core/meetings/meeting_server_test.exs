@@ -8,7 +8,7 @@ defmodule Core.Meetings.MeetingServerTest do
   test "server shuts down when deleting meeting" do
     user = insert!(:user)
     meeting = insert!(:meeting)
-    admin = insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [])
+    admin = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
     MeetingServer.check_if_already_joined(meeting.id, user)
 
@@ -35,21 +35,63 @@ defmodule Core.Meetings.MeetingServerTest do
   test "calculates common days from all attendees" do
     user1 = insert!(:user)
     user2 = insert!(:user)
-    meeting = insert!(:meeting)
-    insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1, 2, 3])
-    insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2, 3, 4])
+    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Week{include_weekends: true})
+
+    insert!(:attendee,
+      user: user1,
+      meeting: meeting,
+      role: :admin,
+      config: %Meetings.Attendee.Config.Week{available_days: [1, 2, 3]}
+    )
+
+    insert!(:attendee,
+      user: user2,
+      meeting: meeting,
+      role: :user,
+      config: %Meetings.Attendee.Config.Week{available_days: [2, 3, 4]}
+    )
 
     {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
 
     assert Enum.sort(state.common_days) == [2, 3]
   end
 
+  test "calculates common hours from all attendees for config: Meetings.Meeting.Config.Day" do
+    user1 = insert!(:user)
+    user2 = insert!(:user)
+    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Day{})
+
+    insert!(:attendee,
+      user: user1,
+      meeting: meeting,
+      role: :admin,
+      config: %Meetings.Attendee.Config.Day{available_hours: [9, 10, 11, 12]}
+    )
+
+    insert!(:attendee,
+      user: user2,
+      meeting: meeting,
+      role: :user,
+      config: %Meetings.Attendee.Config.Day{available_hours: [10, 11, 12, 13]}
+    )
+
+    {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
+
+    assert Enum.sort(state.common_hours) == [10, 11, 12]
+  end
+
   test "complete flow: join, toggle day, leave" do
     user = insert!(:user)
-    meeting = insert!(:meeting)
+    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Week{include_weekends: true})
 
     MeetingServer.join_meeting(meeting.id, user)
-    attendee = Meetings.get_attendee_by(user_id: user.id, meeting_id: meeting.id)
+
+    attendee =
+      Meetings.get_attendee_by(
+        user_id: user.id,
+        meeting_id: meeting.id,
+        config: %Meetings.Attendee.Config.Week{available_days: []}
+      )
 
     Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting.id}")
 
@@ -58,7 +100,7 @@ defmodule Core.Meetings.MeetingServerTest do
     assert_receive {:state_updated, _state}, 100
 
     updated = Meetings.get_attendee_by(id: attendee.id)
-    assert 1 in updated.available_days
+    assert 1 in updated.config.available_days
 
     assert :ok = MeetingServer.leave_meeting(meeting.id, updated)
   end
@@ -66,7 +108,7 @@ defmodule Core.Meetings.MeetingServerTest do
   test "invalid operations don't crash server" do
     user = insert!(:user)
     meeting = insert!(:meeting)
-    regular = insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1])
+    regular = insert!(:attendee, user: user, meeting: meeting, role: :user)
 
     # Non-admin tries admin action
     MeetingServer.update_meeting(meeting.id, regular, %{title: "Hacked"})
@@ -79,8 +121,8 @@ defmodule Core.Meetings.MeetingServerTest do
     user1 = insert!(:user)
     user2 = insert!(:user)
     meeting = insert!(:meeting)
-    admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
-    regular = insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+    admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin)
+    regular = insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
     Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{regular.id}")
     Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting.id}")

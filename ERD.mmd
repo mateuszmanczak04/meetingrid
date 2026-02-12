@@ -1,0 +1,39 @@
+erDiagram
+  users {
+    integer id PK
+    varchar name
+    timestamp inserted_at
+    timestamp updated_at
+  }
+  attendees {
+    integer id PK
+    array available_days
+    varchar role
+    integer meeting_id
+    integer user_id
+    timestamp inserted_at
+    timestamp updated_at
+  }
+  invitations {
+    integer id PK
+    varchar code
+    varchar role
+    integer meeting_id
+    timestamp inserted_at
+    timestamp updated_at
+  }
+  meetings {
+    integer id PK
+    varchar title
+    varchar mode
+    jsonb config
+    timestamp inserted_at
+    timestamp updated_at
+  }
+  schema_migrations {
+    integer version PK
+    timestamp inserted_at
+  }
+  meetings ||--|{ attendees : ""
+  meetings ||--|{ invitations : ""
+  users ||--|{ attendees : ""

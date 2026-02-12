@@ -26,7 +26,7 @@ defmodule Core.Meetings do
              |> Repo.insert(),
            {:ok, attendee} <-
              %Attendee{}
-             |> Attendee.changeset(%{role: :admin, available_days: []})
+             |> Attendee.changeset(%{role: :admin, config: %{mode: meeting.config.mode}})
              |> Ecto.Changeset.put_assoc(:meeting, meeting)
              |> Ecto.Changeset.put_assoc(:user, current_user)
              |> Repo.insert() do
@@ -110,18 +110,39 @@ defmodule Core.Meetings do
     end
   end
 
-  @spec toggle_available_day(Attendee.t(), Attendee.day()) ::
+  @spec toggle_available_day(Attendee.t(), Attendee.Config.Week.day()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
-  def toggle_available_day(%Attendee{} = current_attendee, day_number) do
+  def toggle_available_day(%Attendee{} = current_attendee, day_number)
+      when current_attendee.config.mode == :week do
     available_days =
-      if day_number in current_attendee.available_days do
-        current_attendee.available_days -- [day_number]
+      if day_number in current_attendee.config.available_days do
+        current_attendee.config.available_days -- [day_number]
       else
-        [day_number | current_attendee.available_days]
+        [day_number | current_attendee.config.available_days]
       end
 
     current_attendee
-    |> Attendee.changeset(%{available_days: available_days})
+    |> Attendee.changeset(%{
+      config: %{mode: current_attendee.config.mode, available_days: available_days}
+    })
+    |> Repo.update()
+  end
+
+  @spec toggle_available_hour(Attendee.t(), Attendee.Config.Day.hour()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
+  def toggle_available_hour(%Attendee{} = current_attendee, hour_number)
+      when current_attendee.config.mode == :day do
+    available_hours =
+      if hour_number in current_attendee.config.available_hours do
+        current_attendee.config.available_hours -- [hour_number]
+      else
+        [hour_number | current_attendee.config.available_hours]
+      end
+
+    current_attendee
+    |> Attendee.changeset(%{
+      config: %{mode: current_attendee.config.mode, available_hours: available_hours}
+    })
     |> Repo.update()
   end
 

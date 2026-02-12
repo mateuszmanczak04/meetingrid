@@ -13,7 +13,7 @@ defmodule Core.Meetings.Invitation do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(invitation, attrs) do
+  def changeset(%__MODULE__{} = invitation, attrs) do
     invitation
     |> cast(attrs, [:code, :role])
     |> validate_required([:code, :role])

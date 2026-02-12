@@ -31,7 +31,11 @@ defmodule Core.MeetingsTest do
     test "creates meeting and adds creator as admin" do
       user = insert!(:user)
 
-      assert {:ok, attendee} = Meetings.create_meeting(user, %{title: "Team Sync"})
+      assert {:ok, attendee} =
+               Meetings.create_meeting(user, %{
+                 "title" => "Team Sync",
+                 "config" => %{"mode" => "week", "include_weekends" => true}
+               })
 
       assert attendee.role == :admin
       assert attendee.user_id == user.id
@@ -51,7 +55,13 @@ defmodule Core.MeetingsTest do
     setup do
       user = insert!(:user)
       meeting = insert!(:meeting)
-      admin = insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+
+      admin =
+        insert!(:attendee,
+          user: user,
+          meeting: meeting,
+          role: :admin
+        )
 
       %{meeting: meeting, admin: admin}
     end
@@ -66,7 +76,11 @@ defmodule Core.MeetingsTest do
       user = insert!(:user)
 
       regular_attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1])
+        insert!(:attendee,
+          user: user,
+          meeting: meeting,
+          role: :user
+        )
 
       assert {:error, :unauthorized} =
                Meetings.update_meeting(regular_attendee, meeting, %{title: "Hacked"})
@@ -83,7 +97,7 @@ defmodule Core.MeetingsTest do
     setup do
       user = insert!(:user)
       meeting = insert!(:meeting)
-      admin = insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      admin = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       %{meeting: meeting, admin: admin}
     end
@@ -96,9 +110,7 @@ defmodule Core.MeetingsTest do
 
     test "non-admin cannot delete meeting", %{meeting: meeting} do
       user = insert!(:user)
-
-      regular_attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1])
+      regular_attendee = insert!(:attendee, user: user, meeting: meeting, role: :user)
 
       assert {:error, :unauthorized} = Meetings.delete_meeting(regular_attendee, meeting)
       assert Meetings.get_meeting(meeting.id)
@@ -111,11 +123,8 @@ defmodule Core.MeetingsTest do
       user2 = insert!(:user)
       meeting = insert!(:meeting)
 
-      attendee1 =
-        insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
-
-      attendee2 =
-        insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+      attendee1 = insert!(:attendee, user: user1, meeting: meeting, role: :admin)
+      attendee2 = insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
       attendees = Meetings.list_meeting_attendees(meeting)
 
@@ -133,7 +142,7 @@ defmodule Core.MeetingsTest do
     test "preloads associations when requested" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-      insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       [attendee] = Meetings.list_meeting_attendees(meeting, preload: [:user])
 
@@ -145,12 +154,12 @@ defmodule Core.MeetingsTest do
       user1 = insert!(:user)
       user2 = insert!(:user)
 
-      insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
+      insert!(:attendee, user: user1, meeting: meeting, role: :admin)
 
       # Ensure different timestamps
       Process.sleep(10)
 
-      insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+      insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
       attendees = Meetings.list_meeting_attendees(meeting, order_by: [asc: :inserted_at])
 
@@ -163,9 +172,7 @@ defmodule Core.MeetingsTest do
     test "returns attendee by clauses" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-
-      attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      attendee = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       found = Meetings.get_attendee_by(user_id: user.id, meeting_id: meeting.id)
 
@@ -179,7 +186,7 @@ defmodule Core.MeetingsTest do
     test "preloads associations when requested" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-      insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       attendee = Meetings.get_attendee_by([user_id: user.id], preload: [:user, :meeting])
 
@@ -192,9 +199,7 @@ defmodule Core.MeetingsTest do
     test "returns attendee if user already joined" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-
-      attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      attendee = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       result = Meetings.check_if_already_joined(user, meeting)
 
@@ -216,14 +221,17 @@ defmodule Core.MeetingsTest do
 
       assert {:ok, attendee} =
                Meetings.join_meeting(user, meeting, %{
-                 role: :user,
-                 available_days: [1, 3, 5]
+                 "role" => "user",
+                 "config" => %{
+                   "mode" => "week"
+                 }
                })
 
       assert attendee.user_id == user.id
       assert attendee.meeting_id == meeting.id
       assert attendee.role == :user
-      assert attendee.available_days == [1, 3, 5]
+      assert attendee.config.mode == :week
+      assert attendee.config.available_days == []
     end
 
     test "returns error with invalid attributes" do
@@ -241,10 +249,8 @@ defmodule Core.MeetingsTest do
       user1 = insert!(:user)
       user2 = insert!(:user)
       meeting = insert!(:meeting)
-      admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
-
-      regular =
-        insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+      admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin)
+      regular = insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
       %{admin: admin, regular: regular}
     end
@@ -262,9 +268,7 @@ defmodule Core.MeetingsTest do
     test "admin can demote another admin", %{admin: admin} do
       user = insert!(:user)
       meeting = Repo.preload(admin, :meeting).meeting
-
-      other_admin =
-        insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      other_admin = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       assert {:ok, updated} = Meetings.update_attendee_role(admin, other_admin, :user)
 
@@ -278,12 +282,17 @@ defmodule Core.MeetingsTest do
       meeting = insert!(:meeting)
 
       attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1, 2])
+        insert!(:attendee,
+          user: user,
+          meeting: meeting,
+          role: :user,
+          config: %Meetings.Attendee.Config.Week{available_days: [1, 2]}
+        )
 
       assert {:ok, updated} = Meetings.toggle_available_day(attendee, 3)
 
-      assert 3 in updated.available_days
-      assert length(updated.available_days) == 3
+      assert 3 in updated.config.available_days
+      assert length(updated.config.available_days) == 3
     end
 
     test "removes day when present" do
@@ -291,26 +300,29 @@ defmodule Core.MeetingsTest do
       meeting = insert!(:meeting)
 
       attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1, 2, 3])
+        insert!(:attendee,
+          user: user,
+          meeting: meeting,
+          role: :user,
+          config: %Meetings.Attendee.Config.Week{available_days: [1, 2, 3]}
+        )
 
       assert {:ok, updated} = Meetings.toggle_available_day(attendee, 2)
 
-      refute 2 in updated.available_days
-      assert length(updated.available_days) == 2
+      refute 2 in updated.config.available_days
+      assert length(updated.config.available_days) == 2
     end
 
     test "can toggle same day multiple times" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-
-      attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :user, available_days: [1])
+      attendee = insert!(:attendee, user: user, meeting: meeting, role: :user)
 
       {:ok, toggled_on} = Meetings.toggle_available_day(attendee, 2)
-      assert 2 in toggled_on.available_days
+      assert 2 in toggled_on.config.available_days
 
       {:ok, toggled_off} = Meetings.toggle_available_day(toggled_on, 2)
-      refute 2 in toggled_off.available_days
+      refute 2 in toggled_off.config.available_days
     end
   end
 
@@ -318,9 +330,7 @@ defmodule Core.MeetingsTest do
     test "doesn't allow leaving as a last admin" do
       user = insert!(:user)
       meeting = insert!(:meeting)
-
-      attendee =
-        insert!(:attendee, user: user, meeting: meeting, role: :admin, available_days: [1])
+      attendee = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
       assert {:error, :last_admin_cant_leave} = Meetings.leave_meeting(attendee)
 
@@ -331,12 +341,8 @@ defmodule Core.MeetingsTest do
       user1 = insert!(:user)
       user2 = insert!(:user)
       meeting = insert!(:meeting)
-
-      attendee1 =
-        insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
-
-      attendee2 =
-        insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+      attendee1 = insert!(:attendee, user: user1, meeting: meeting, role: :admin)
+      attendee2 = insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
       assert {:ok, :leave} = Meetings.leave_meeting(attendee2)
 
@@ -351,10 +357,8 @@ defmodule Core.MeetingsTest do
       user1 = insert!(:user)
       user2 = insert!(:user)
       meeting = insert!(:meeting)
-      admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin, available_days: [1])
-
-      regular =
-        insert!(:attendee, user: user2, meeting: meeting, role: :user, available_days: [2])
+      admin = insert!(:attendee, user: user1, meeting: meeting, role: :admin)
+      regular = insert!(:attendee, user: user2, meeting: meeting, role: :user)
 
       %{admin: admin, regular: regular, meeting: meeting}
     end

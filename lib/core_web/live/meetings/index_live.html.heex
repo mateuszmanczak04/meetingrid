@@ -1,19 +1,27 @@
 <h1 class="text-4xl font-bold">Your Meetings</h1>
 
-<.button id="create_meeting_button" phx-click="create_meeting" class="mt-4">
-  <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
-</.button>
+<.link navigate={~p"/meetings/new"}>
+  <.button class="mt-4">
+    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
+  </.button>
+</.link>
 
 <section class="grid grid-cols-3 gap-4 mt-4">
   <%= for attendee <- @attendees do %>
     <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">
       <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="hover:underline">
-        <h2 class="font-semibold text-lg mb-2">{attendee.meeting.title}</h2>
+        <h2 class="font-semibold text-lg">{attendee.meeting.title}</h2>
+        <p :if={attendee.meeting.config.mode == :day} class="mb-2 text-sm text-muted-foreground">
+          🕓 Time of the day
+        </p>
+        <p :if={attendee.meeting.config.mode == :week} class="mb-2 text-sm text-muted-foreground">
+          📅 Day of the week
+        </p>
       </.link>
-      <ul class="grid grid-cols-7 gap-x-1 w-fit mb-4">
+      <ul :if={attendee.meeting.config.mode == :week} class="grid grid-cols-7 gap-x-1 w-fit mb-4">
         <li
-          :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
-          data-selected={day_number in attendee.available_days && "true"}
+          :for={day_number <- if attendee.meeting.config.include_weekends, do: 0..6, else: 0..4}
+          data-selected={day_number in attendee.config.available_days && "true"}
           class="size-4 rounded-sm transition-colors bg-neutral-200 data-[selected='true']:bg-green-400"
         >
         </li>

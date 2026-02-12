@@ -43,11 +43,14 @@
   </.button>
 </.modal>
 
-<table class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10">
+<table
+  :if={@meeting.config.mode == :week}
+  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
+>
   <thead>
     <tr>
       <th class="bg-gray-100 w-40">Attendee</th>
-      <%= for {text, index} <- Enum.with_index(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]) do %>
+      <%= for {text, index} <- Enum.with_index(if @meeting.config.include_weekends, do: ~w(Mon Tue Wed Thu Fri Sat Sun), else: ~w(Mon Tue Wed Thu Fri)) do %>
         <th
           data-day={index}
           data-match={index in @common_days && "true"}
@@ -69,9 +72,9 @@
         {attendee.user.name}
       </td>
       <td
-        :for={day_number <- [0, 1, 2, 3, 4, 5, 6]}
+        :for={day_number <- if @meeting.config.include_weekends, do: 0..6, else: 0..4}
         data-day={day_number}
-        data-selected={day_number in attendee.available_days && "true"}
+        data-selected={day_number in attendee.config.available_days && "true"}
         class="transition-colors data-[selected='true']:bg-green-400"
         phx-click={attendee.id == @current_attendee.id && "toggle_available_day"}
         phx-value-day_number={day_number}
@@ -98,6 +101,42 @@
         >
           {if attendee.role == :admin, do: "Remove admin", else: "Make admin"}
         </.button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table
+  :if={@meeting.config.mode == :day}
+  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
+>
+  <thead>
+    <tr>
+      <th class="bg-gray-100 w-40">Hour</th>
+      <th :for={attendee <- @attendees} class="bg-gray-100">
+        <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
+        <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
+        {attendee.user.name}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr :for={hour <- 0..23}>
+      <td
+        data-hour={hour}
+        data-match={hour in @common_hours && "true"}
+        class="bg-gray-100 data-[match='true']:bg-green-200"
+      >
+        {hour}:00
+      </td>
+      <td
+        :for={attendee <- @attendees}
+        data-hour={hour}
+        data-selected={hour in attendee.config.available_hours && "true"}
+        class="transition-colors data-[selected='true']:bg-green-400"
+        phx-click={attendee.id == @current_attendee.id && "toggle_available_hour"}
+        phx-value-hour={hour}
+      >
       </td>
     </tr>
   </tbody>

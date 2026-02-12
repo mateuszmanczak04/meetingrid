@@ -11,14 +11,18 @@ defmodule Core.Factory do
 
   def build(:meeting) do
     %Core.Meetings.Meeting{
-      title: "meeting#{System.unique_integer()}"
+      title: "meeting#{System.unique_integer()}",
+      config: %Core.Meetings.Meeting.Config.Week{mode: :week, include_weekends: true}
     }
   end
 
   def build(:attendee) do
     %Core.Meetings.Attendee{
-      available_days: [1, 2],
-      role: :user
+      role: :user,
+      config: %Core.Meetings.Attendee.Config.Week{
+        mode: :week,
+        available_days: []
+      }
     }
   end
 
