@@ -35,21 +35,14 @@ defmodule Core.Meetings.MeetingServerTest do
   test "calculates common days from all attendees" do
     user1 = insert!(:user)
     user2 = insert!(:user)
-    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Week{include_weekends: true})
+    meeting_config = build(:meeting_config_week)
+    meeting = insert!(:meeting, config: meeting_config)
 
-    insert!(:attendee,
-      user: user1,
-      meeting: meeting,
-      role: :admin,
-      config: %Meetings.Attendee.Config.Week{available_days: [1, 2, 3]}
-    )
+    attendee_config1 = build(:attendee_config_week, available_days: [1, 2, 3])
+    insert!(:attendee, user: user1, meeting: meeting, role: :admin, config: attendee_config1)
 
-    insert!(:attendee,
-      user: user2,
-      meeting: meeting,
-      role: :user,
-      config: %Meetings.Attendee.Config.Week{available_days: [2, 3, 4]}
-    )
+    attendee_config2 = build(:attendee_config_week, available_days: [2, 3, 4])
+    insert!(:attendee, user: user2, meeting: meeting, role: :user, config: attendee_config2)
 
     {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
 
@@ -59,21 +52,14 @@ defmodule Core.Meetings.MeetingServerTest do
   test "calculates common hours from all attendees for config: Meetings.Meeting.Config.Day" do
     user1 = insert!(:user)
     user2 = insert!(:user)
-    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Day{})
+    meeting_config = build(:meeting_config_day)
+    meeting = insert!(:meeting, config: meeting_config)
 
-    insert!(:attendee,
-      user: user1,
-      meeting: meeting,
-      role: :admin,
-      config: %Meetings.Attendee.Config.Day{available_hours: [9, 10, 11, 12]}
-    )
+    attendee_config1 = build(:attendee_config_day, available_hours: [9, 10, 11, 12])
+    insert!(:attendee, user: user1, meeting: meeting, role: :admin, config: attendee_config1)
 
-    insert!(:attendee,
-      user: user2,
-      meeting: meeting,
-      role: :user,
-      config: %Meetings.Attendee.Config.Day{available_hours: [10, 11, 12, 13]}
-    )
+    attendee_config2 = build(:attendee_config_day, available_hours: [10, 11, 12, 13])
+    insert!(:attendee, user: user2, meeting: meeting, role: :user, config: attendee_config2)
 
     {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
 
@@ -82,15 +68,18 @@ defmodule Core.Meetings.MeetingServerTest do
 
   test "complete flow: join, toggle day, leave" do
     user = insert!(:user)
-    meeting = insert!(:meeting, config: %Meetings.Meeting.Config.Week{include_weekends: true})
+    meeting_config = build(:meeting_config_week)
+    meeting = insert!(:meeting, config: meeting_config)
 
     MeetingServer.join_meeting(meeting.id, user)
+
+    attendee_config = build(:attendee_config_week)
 
     attendee =
       Meetings.get_attendee_by(
         user_id: user.id,
         meeting_id: meeting.id,
-        config: %Meetings.Attendee.Config.Week{available_days: []}
+        config: attendee_config
       )
 
     Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting.id}")

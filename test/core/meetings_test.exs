@@ -286,7 +286,7 @@ defmodule Core.MeetingsTest do
           user: user,
           meeting: meeting,
           role: :user,
-          config: %Meetings.Attendee.Config.Week{available_days: [1, 2]}
+          config: build(:attendee_config_week, available_days: [1, 2])
         )
 
       assert {:ok, updated} = Meetings.toggle_available_day(attendee, 3)
@@ -304,7 +304,7 @@ defmodule Core.MeetingsTest do
           user: user,
           meeting: meeting,
           role: :user,
-          config: %Meetings.Attendee.Config.Week{available_days: [1, 2, 3]}
+          config: build(:attendee_config_week, available_days: [1, 2, 3])
         )
 
       assert {:ok, updated} = Meetings.toggle_available_day(attendee, 2)
