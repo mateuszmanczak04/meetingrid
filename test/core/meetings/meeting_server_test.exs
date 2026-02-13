@@ -73,14 +73,7 @@ defmodule Core.Meetings.MeetingServerTest do
 
     MeetingServer.join_meeting(meeting.id, user)
 
-    attendee_config = build(:attendee_config_week)
-
-    attendee =
-      Meetings.get_attendee_by(
-        user_id: user.id,
-        meeting_id: meeting.id,
-        config: attendee_config
-      )
+    attendee = Meetings.get_attendee_by(user_id: user.id, meeting_id: meeting.id)
 
     Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting.id}")
 

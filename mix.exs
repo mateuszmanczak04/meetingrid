@@ -60,7 +60,8 @@ defmodule Core.MixProject do
       {:bandit, "~> 1.5"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:argon2_elixir, "~> 4.1"},
-      {:ecto_erd, "~> 0.6.6"}
+      {:ecto_erd, "~> 0.6.6"},
+      {:polymorphic_embed, "~> 5.0"}
     ]
   end
 
