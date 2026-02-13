@@ -1,6 +1,7 @@
 defmodule Core.Meetings.Meeting do
   use Ecto.Schema
   import Ecto.Changeset
+  import PolymorphicEmbed
 
   @type t :: %__MODULE__{}
   @type id :: pos_integer()
@@ -8,7 +9,15 @@ defmodule Core.Meetings.Meeting do
   schema "meetings" do
     field :title, :string
 
-    field :config, Core.Meetings.Meeting.Config
+    polymorphic_embeds_one(:config,
+      types: [
+        day: Core.Meetings.Meeting.Config.Day,
+        week: Core.Meetings.Meeting.Config.Week
+      ],
+      type_field_name: :mode,
+      on_type_not_found: :raise,
+      on_replace: :update
+    )
 
     has_many :attendees, Core.Meetings.Attendee
     has_many :invitations, Core.Meetings.Invitation
@@ -22,7 +31,8 @@ defmodule Core.Meetings.Meeting do
 
   def changeset(%__MODULE__{} = meeting, attrs) do
     meeting
-    |> cast(attrs, [:title, :config])
+    |> cast(attrs, [:title])
+    |> cast_polymorphic_embed(:config, required: true)
     |> validate_required([:title, :config])
     |> validate_length(:title, max: 200)
   end
