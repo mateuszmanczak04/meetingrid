@@ -12,7 +12,8 @@ defmodule Core.Meetings.Meeting do
     polymorphic_embeds_one(:config,
       types: [
         day: Core.Meetings.Meeting.Config.Day,
-        week: Core.Meetings.Meeting.Config.Week
+        week: Core.Meetings.Meeting.Config.Week,
+        month: Core.Meetings.Meeting.Config.Month
       ],
       type_field_name: :mode,
       on_type_not_found: :raise,
@@ -33,7 +34,7 @@ defmodule Core.Meetings.Meeting do
     meeting
     |> cast(attrs, [:title])
     |> cast_polymorphic_embed(:config, required: true)
-    |> validate_required([:title, :config])
+    |> validate_required([:title])
     |> validate_length(:title, max: 200)
   end
 end

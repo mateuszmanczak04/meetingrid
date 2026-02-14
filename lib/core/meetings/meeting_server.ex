@@ -117,13 +117,7 @@ defmodule Core.Meetings.MeetingServer do
 
   @impl true
   def handle_call({:join_meeting, current_user}, _from, state) do
-    config =
-      case state.meeting.config.mode do
-        :day -> %{mode: :day, available_hours: []}
-        :week -> %{mode: :week, available_days: []}
-      end
-
-    case Meetings.join_meeting(current_user, state.meeting, %{role: :user, config: config}) do
+    case Meetings.join_meeting(current_user, state.meeting) do
       {:ok, _} -> {:reply, :ok, reload_and_broadcast(state.meeting)}
       {:error, _} -> {:reply, :error, state}
     end
@@ -249,14 +243,18 @@ defmodule Core.Meetings.MeetingServer do
         order_by: [:id]
       )
 
-    case meeting.config.mode do
-      :week ->
+    case meeting.config do
+      %Meeting.Config.Day{} ->
+        common_hours = get_common_hours(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_hours: common_hours}
+
+      %Meeting.Config.Week{} ->
         common_days = get_common_days(attendees)
         %__MODULE__{meeting: meeting, attendees: attendees, common_days: common_days}
 
-      :day ->
-        common_hours = get_common_hours(attendees)
-        %__MODULE__{meeting: meeting, attendees: attendees, common_hours: common_hours}
+      %Meeting.Config.Month{} ->
+        common_days = get_common_days(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_days: common_days}
     end
   end
 

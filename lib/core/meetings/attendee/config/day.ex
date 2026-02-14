@@ -32,14 +32,12 @@ defmodule Core.Meetings.Attendee.Config.Day do
 
   @primary_key false
   embedded_schema do
-    field :mode, Ecto.Enum, values: [:day], default: :day
     field :available_hours, {:array, :integer}, default: []
   end
 
   def changeset(%__MODULE__{} = config, attrs) do
     config
-    |> cast(attrs, [:mode, :available_hours])
-    |> validate_required([])
+    |> cast(attrs, [:available_hours])
     |> validate_available_hours()
   end
 
@@ -52,7 +50,11 @@ defmodule Core.Meetings.Attendee.Config.Day do
         if Enum.all?(hours, &(&1 in @valid_available_hours)) do
           changeset
         else
-          add_error(changeset, :available_hours, "must be between 0 and 23")
+          add_error(
+            changeset,
+            :available_hours,
+            "all must be integers from #{inspect(@valid_available_hours)}"
+          )
         end
 
       _other ->

@@ -1,10 +1,41 @@
-defmodule Core.Meetings.Attendee.Config.Week do
+defmodule Core.Meetings.Attendee.Config.Month do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @type day :: 0 | 1 | 2 | 3 | 4 | 5 | 6
+  @type day ::
+          0
+          | 1
+          | 2
+          | 3
+          | 4
+          | 5
+          | 6
+          | 7
+          | 8
+          | 9
+          | 10
+          | 11
+          | 12
+          | 13
+          | 14
+          | 15
+          | 16
+          | 17
+          | 18
+          | 19
+          | 20
+          | 21
+          | 22
+          | 23
+          | 24
+          | 25
+          | 26
+          | 27
+          | 28
+          | 29
+          | 30
 
-  @valid_available_days 0..6
+  @valid_available_days 0..30
 
   @primary_key false
   embedded_schema do

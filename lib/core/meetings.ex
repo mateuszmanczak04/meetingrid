@@ -26,7 +26,17 @@ defmodule Core.Meetings do
              |> Repo.insert(),
            {:ok, attendee} <-
              %Attendee{}
-             |> Attendee.changeset(%{role: :admin, config: %{mode: meeting.config.mode}})
+             |> Attendee.changeset(%{
+               role: :admin,
+               config: %{
+                 mode:
+                   case meeting.config do
+                     %Meeting.Config.Week{} -> :week
+                     %Meeting.Config.Day{} -> :day
+                     %Meeting.Config.Month{} -> :month
+                   end
+               }
+             })
              |> Ecto.Changeset.put_assoc(:meeting, meeting)
              |> Ecto.Changeset.put_assoc(:user, current_user)
              |> Repo.insert() do
@@ -86,11 +96,21 @@ defmodule Core.Meetings do
     end
   end
 
-  @spec join_meeting(Auth.User.t(), Meeting.t(), map()) ::
+  @spec join_meeting(Auth.User.t(), Meeting.t()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
-  def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting, attrs) do
+  def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting) do
     %Attendee{}
-    |> Attendee.changeset(attrs)
+    |> Attendee.changeset(%{
+      role: :user,
+      config: %{
+        mode:
+          case meeting.config do
+            %Meeting.Config.Week{} -> :week
+            %Meeting.Config.Day{} -> :day
+            %Meeting.Config.Month{} -> :month
+          end
+      }
+    })
     |> Ecto.Changeset.put_assoc(:meeting, meeting)
     |> Ecto.Changeset.put_assoc(:user, current_user)
     |> Repo.insert()
@@ -113,7 +133,8 @@ defmodule Core.Meetings do
   @spec toggle_available_day(Attendee.t(), Attendee.Config.Week.day()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def toggle_available_day(%Attendee{} = current_attendee, day_number)
-      when current_attendee.config.mode == :week do
+      when is_struct(current_attendee.config, Attendee.Config.Week) or
+             is_struct(current_attendee.config, Attendee.Config.Month) do
     available_days =
       if day_number in current_attendee.config.available_days do
         current_attendee.config.available_days -- [day_number]
@@ -122,16 +143,14 @@ defmodule Core.Meetings do
       end
 
     current_attendee
-    |> Attendee.changeset(%{
-      config: %{mode: current_attendee.config.mode, available_days: available_days}
-    })
+    |> Attendee.changeset(%{config: %{available_days: available_days}})
     |> Repo.update()
   end
 
   @spec toggle_available_hour(Attendee.t(), Attendee.Config.Day.hour()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def toggle_available_hour(%Attendee{} = current_attendee, hour_number)
-      when current_attendee.config.mode == :day do
+      when is_struct(current_attendee.config, Attendee.Config.Day) do
     available_hours =
       if hour_number in current_attendee.config.available_hours do
         current_attendee.config.available_hours -- [hour_number]
@@ -140,9 +159,7 @@ defmodule Core.Meetings do
       end
 
     current_attendee
-    |> Attendee.changeset(%{
-      config: %{mode: current_attendee.config.mode, available_hours: available_hours}
-    })
+    |> Attendee.changeset(%{config: %{available_hours: available_hours}})
     |> Repo.update()
   end
 

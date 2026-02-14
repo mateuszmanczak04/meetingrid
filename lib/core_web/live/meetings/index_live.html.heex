@@ -11,14 +11,30 @@
     <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">
       <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="hover:underline">
         <h2 class="font-semibold text-lg">{attendee.meeting.title}</h2>
-        <p :if={attendee.meeting.config.mode == :day} class="mb-2 text-sm text-muted-foreground">
+        <p
+          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Day)}
+          class="mb-2 text-sm text-muted-foreground"
+        >
           🕓 Time of the day
         </p>
-        <p :if={attendee.meeting.config.mode == :week} class="mb-2 text-sm text-muted-foreground">
+        <p
+          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
+          class="mb-2 text-sm text-muted-foreground"
+        >
           📅 Day of the week
         </p>
+
+        <p
+          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
+          class="mb-2 text-sm text-muted-foreground"
+        >
+          📆 Day of the month
+        </p>
       </.link>
-      <ul :if={attendee.meeting.config.mode == :week} class="grid grid-cols-7 gap-x-1 w-fit mb-4">
+      <ul
+        :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
+        class="grid grid-cols-7 gap-x-1 w-fit mb-4"
+      >
         <li
           :for={day_number <- if attendee.meeting.config.include_weekends, do: 0..6, else: 0..4}
           data-selected={day_number in attendee.config.available_days && "true"}

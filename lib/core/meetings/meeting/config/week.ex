@@ -4,13 +4,11 @@ defmodule Core.Meetings.Meeting.Config.Week do
 
   @primary_key false
   embedded_schema do
-    field :mode, Ecto.Enum, values: [:week], default: :week
     field :include_weekends, :boolean, default: false
   end
 
   def changeset(%__MODULE__{} = config, attrs) do
     config
-    |> cast(attrs, [:mode, :include_weekends])
-    |> validate_required([:mode])
+    |> cast(attrs, [:include_weekends])
   end
 end

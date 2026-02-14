@@ -219,28 +219,13 @@ defmodule Core.MeetingsTest do
       user = insert!(:user)
       meeting = insert!(:meeting)
 
-      assert {:ok, attendee} =
-               Meetings.join_meeting(user, meeting, %{
-                 "role" => "user",
-                 "config" => %{
-                   "mode" => "week"
-                 }
-               })
+      assert {:ok, attendee} = Meetings.join_meeting(user, meeting)
 
       assert attendee.user_id == user.id
       assert attendee.meeting_id == meeting.id
       assert attendee.role == :user
-      assert attendee.config.mode == :week
+      assert is_struct(attendee.config, Meetings.Attendee.Config.Week)
       assert attendee.config.available_days == []
-    end
-
-    test "returns error with invalid attributes" do
-      user = insert!(:user)
-      meeting = insert!(:meeting)
-
-      assert {:error, changeset} = Meetings.join_meeting(user, meeting, %{})
-
-      refute changeset.valid?
     end
   end
 

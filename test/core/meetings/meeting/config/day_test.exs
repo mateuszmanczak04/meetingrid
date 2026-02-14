@@ -9,18 +9,8 @@ defmodule Core.Meetings.Meeting.Config.DayTest do
       assert changeset.valid?
     end
 
-    test "rejects invalid mode value" do
-      attrs = %{"mode" => :invalid, "date" => ~D[2024-01-15]}
-
-      changeset = Day.changeset(%Day{}, attrs)
-
-      refute changeset.valid?
-      assert %{mode: ["is invalid"]} = errors_on(changeset)
-    end
-
-    test "sets default mode to :day" do
-      config = %Day{}
-      assert config.mode == :day
+    test "sets default values" do
+      _config = %Day{}
     end
   end
 end
