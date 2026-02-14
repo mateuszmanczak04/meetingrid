@@ -244,13 +244,17 @@ defmodule Core.Meetings.MeetingServer do
       )
 
     case meeting.config do
+      %Meeting.Config.Day{} ->
+        common_hours = get_common_hours(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_hours: common_hours}
+
       %Meeting.Config.Week{} ->
         common_days = get_common_days(attendees)
         %__MODULE__{meeting: meeting, attendees: attendees, common_days: common_days}
 
-      %Meeting.Config.Day{} ->
-        common_hours = get_common_hours(attendees)
-        %__MODULE__{meeting: meeting, attendees: attendees, common_hours: common_hours}
+      %Meeting.Config.Month{} ->
+        common_days = get_common_days(attendees)
+        %__MODULE__{meeting: meeting, attendees: attendees, common_days: common_days}
     end
   end
 

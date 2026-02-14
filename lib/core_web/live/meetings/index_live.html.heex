@@ -23,6 +23,13 @@
         >
           📅 Day of the week
         </p>
+
+        <p
+          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
+          class="mb-2 text-sm text-muted-foreground"
+        >
+          📆 Day of the month
+        </p>
       </.link>
       <ul
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}

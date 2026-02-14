@@ -33,6 +33,7 @@ defmodule Core.Meetings do
                    case meeting.config do
                      %Meeting.Config.Week{} -> :week
                      %Meeting.Config.Day{} -> :day
+                     %Meeting.Config.Month{} -> :month
                    end
                }
              })
@@ -106,6 +107,7 @@ defmodule Core.Meetings do
           case meeting.config do
             %Meeting.Config.Week{} -> :week
             %Meeting.Config.Day{} -> :day
+            %Meeting.Config.Month{} -> :month
           end
       }
     })
@@ -131,7 +133,8 @@ defmodule Core.Meetings do
   @spec toggle_available_day(Attendee.t(), Attendee.Config.Week.day()) ::
           {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def toggle_available_day(%Attendee{} = current_attendee, day_number)
-      when is_struct(current_attendee.config, Attendee.Config.Week) do
+      when is_struct(current_attendee.config, Attendee.Config.Week) or
+             is_struct(current_attendee.config, Attendee.Config.Month) do
     available_days =
       if day_number in current_attendee.config.available_days do
         current_attendee.config.available_days -- [day_number]

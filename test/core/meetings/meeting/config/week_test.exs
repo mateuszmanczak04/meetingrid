@@ -10,6 +10,7 @@ defmodule Core.Meetings.Meeting.Config.WeekTest do
       changeset = Week.changeset(%Week{}, attrs)
 
       assert changeset.valid?
+      assert changeset.changes.include_weekends
     end
 
     test "sets default values" do

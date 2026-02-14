@@ -17,12 +17,22 @@
     <select name="config[mode]" id="mode">
       <option value="day">🕓 Time of the day</option>
       <option value="week">📅 Day of the week</option>
+      <option value="month">📆 Day of the month</option>
     </select>
   </div>
 
   <div>
-    <label for="include_weekends">Include weekends (only for <i>Time of the day</i> mode)</label>
+    <label for="include_weekends">Include weekends (only for <i>Day of the week</i> mode)</label>
     <input type="checkbox" name="config[include_weekends]" id="include_weekends" value="true" />
+  </div>
+
+  <div>
+    <label for="days_amount">Days amount (only for <i>Day of the month</i> mode</label>
+    <select name="config[days_amount]" id="days_amount">
+      <option value="28">28</option>
+      <option value="30">️30</option>
+      <option value="31">31</option>
+    </select>
   </div>
 
   <button type="submit" class="bg-primary h-10 px-8">Create</button>

@@ -50,7 +50,11 @@ defmodule Core.Meetings.Attendee.Config.Day do
         if Enum.all?(hours, &(&1 in @valid_available_hours)) do
           changeset
         else
-          add_error(changeset, :available_hours, "must be between 0 and 23")
+          add_error(
+            changeset,
+            :available_hours,
+            "all must be integers from #{inspect(@valid_available_hours)}"
+          )
         end
 
       _other ->

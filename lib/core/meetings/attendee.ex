@@ -12,7 +12,8 @@ defmodule Core.Meetings.Attendee do
     polymorphic_embeds_one(:config,
       types: [
         day: Core.Meetings.Attendee.Config.Day,
-        week: Core.Meetings.Attendee.Config.Week
+        week: Core.Meetings.Attendee.Config.Week,
+        month: Core.Meetings.Attendee.Config.Month
       ],
       type_field_name: :mode,
       on_type_not_found: :raise,
