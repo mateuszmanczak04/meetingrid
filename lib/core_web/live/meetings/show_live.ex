@@ -1,6 +1,7 @@
 defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
+  alias Core.Meetings.Meeting
 
   @impl true
   def mount(%{"id" => meeting_id}, %{"user" => user}, socket) do
@@ -14,18 +15,20 @@ defmodule CoreWeb.Meetings.ShowLive do
         Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
         Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{current_attendee.id}")
 
-        case state.meeting.config.mode do
-          :week ->
+        case state.meeting.config do
+          %Meeting.Config.Week{} ->
             {:ok,
              socket
+             |> assign(:mode, :week)
              |> assign(:current_attendee, current_attendee)
              |> assign(:meeting, state.meeting)
              |> assign(:attendees, state.attendees)
              |> assign(:common_days, state.common_days)}
 
-          :day ->
+          %Meeting.Config.Day{} ->
             {:ok,
              socket
+             |> assign(:mode, :day)
              |> assign(:current_attendee, current_attendee)
              |> assign(:meeting, state.meeting)
              |> assign(:attendees, state.attendees)
@@ -42,8 +45,8 @@ defmodule CoreWeb.Meetings.ShowLive do
         &(&1.id === socket.assigns.current_attendee.id)
       )
 
-    case state.meeting.config.mode do
-      :week ->
+    case state.meeting.config do
+      %Meeting.Config.Week{} ->
         {:noreply,
          socket
          |> assign(:meeting, state.meeting)
@@ -51,7 +54,7 @@ defmodule CoreWeb.Meetings.ShowLive do
          |> assign(:current_attendee, current_attendee)
          |> assign(:common_days, state.common_days)}
 
-      :day ->
+      %Meeting.Config.Day{} ->
         {:noreply,
          socket
          |> assign(:meeting, state.meeting)

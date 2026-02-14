@@ -12,18 +12,8 @@ defmodule Core.Meetings.Meeting.Config.WeekTest do
       assert changeset.valid?
     end
 
-    test "rejects invalid mode value" do
-      attrs = %{"mode" => "invalid", "include_weekends" => true}
-
-      changeset = Week.changeset(%Week{}, attrs)
-
-      refute changeset.valid?
-      assert %{mode: ["is invalid"]} = errors_on(changeset)
-    end
-
     test "sets default values" do
       config = %Week{}
-      assert config.mode == :week
       assert config.include_weekends == false
     end
   end

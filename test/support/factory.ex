@@ -17,16 +17,11 @@ defmodule Core.Factory do
   end
 
   def build(:meeting_config_week) do
-    %Core.Meetings.Meeting.Config.Week{
-      mode: :week,
-      include_weekends: true
-    }
+    %Core.Meetings.Meeting.Config.Week{include_weekends: true}
   end
 
   def build(:meeting_config_day) do
-    %Core.Meetings.Meeting.Config.Day{
-      mode: :day
-    }
+    %Core.Meetings.Meeting.Config.Day{}
   end
 
   def build(:attendee) do
@@ -37,17 +32,11 @@ defmodule Core.Factory do
   end
 
   def build(:attendee_config_week) do
-    %Core.Meetings.Attendee.Config.Week{
-      mode: :week,
-      available_days: []
-    }
+    %Core.Meetings.Attendee.Config.Week{available_days: []}
   end
 
   def build(:attendee_config_day) do
-    %Core.Meetings.Attendee.Config.Day{
-      mode: :day,
-      available_hours: []
-    }
+    %Core.Meetings.Attendee.Config.Day{available_hours: []}
   end
 
   # Convenience API

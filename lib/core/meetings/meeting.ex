@@ -33,7 +33,7 @@ defmodule Core.Meetings.Meeting do
     meeting
     |> cast(attrs, [:title])
     |> cast_polymorphic_embed(:config, required: true)
-    |> validate_required([:title, :config])
+    |> validate_required([:title])
     |> validate_length(:title, max: 200)
   end
 end

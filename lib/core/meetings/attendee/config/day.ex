@@ -32,14 +32,12 @@ defmodule Core.Meetings.Attendee.Config.Day do
 
   @primary_key false
   embedded_schema do
-    field :mode, Ecto.Enum, values: [:day], default: :day
     field :available_hours, {:array, :integer}, default: []
   end
 
   def changeset(%__MODULE__{} = config, attrs) do
     config
-    |> cast(attrs, [:mode, :available_hours])
-    |> validate_required([])
+    |> cast(attrs, [:available_hours])
     |> validate_available_hours()
   end
 

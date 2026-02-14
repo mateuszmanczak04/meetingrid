@@ -44,7 +44,7 @@
 </.modal>
 
 <table
-  :if={@meeting.config.mode == :week}
+  :if={@mode == :week}
   class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
 >
   <thead>
@@ -107,7 +107,7 @@
 </table>
 
 <table
-  :if={@meeting.config.mode == :day}
+  :if={@mode == :day}
   class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
 >
   <thead>
