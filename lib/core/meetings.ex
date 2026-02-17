@@ -233,6 +233,15 @@ defmodule Core.Meetings do
     |> Repo.all()
   end
 
+  @spec revoke_invitation(Attendee.t(), integer()) ::
+          {:ok, Invitation.t()} | {:error, :unauhorized} | {:error, Ecto.Changeset.t()}
+  def revoke_invitation(%Attendee{} = current_attendee, invitation_id) do
+    with :ok <- ensure_is_admin(current_attendee) do
+      Repo.get(Invitation, invitation_id)
+      |> Repo.delete()
+    end
+  end
+
   defp ensure_is_admin(%Attendee{role: :admin}), do: :ok
   defp ensure_is_admin(%Attendee{} = _attendee), do: {:error, :unauthorized}
 

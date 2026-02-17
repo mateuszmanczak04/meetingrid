@@ -47,4 +47,20 @@ defmodule CoreWeb.Meetings.InviteLive do
         {:noreply, put_flash(socket, :error, "Something went wrong")}
     end
   end
+
+  @impl true
+  def handle_event("revoke", %{"id" => invitation_id}, socket) do
+    case Meetings.revoke_invitation(socket.assigns.current_attendee, invitation_id) do
+      {:ok, _} ->
+        invitations = Meetings.get_meeting_invitations(socket.assigns.meeting)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Successfully revoked an invitation")
+         |> assign(:invitations, invitations)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Something went wrong")}
+    end
+  end
 end
