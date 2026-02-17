@@ -226,11 +226,12 @@ defmodule Core.Meetings do
     end
   end
 
-  @spec get_meeting_invitations(Meeting.t()) :: Invitation.t()
+  @spec get_meeting_invitations(Meeting.t()) :: [Invitation.t()]
   def get_meeting_invitations(%Meeting{} = meeting) do
     Ecto.assoc(meeting, :invitations)
     |> order_by(:expires_at)
     |> Repo.all()
+    |> Enum.filter(&(DateTime.compare(DateTime.utc_now(), &1.expires_at) == :lt))
   end
 
   @spec revoke_invitation(Attendee.t(), integer()) ::
