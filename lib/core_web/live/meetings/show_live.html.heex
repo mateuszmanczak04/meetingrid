@@ -12,7 +12,7 @@
   >
     <.icon name="hero-cog" class="size-4 -translate-y-px" /> Settings
   </.button>
-  <.link navigate={~p"/meetings/#{@meeting.id}/invite"} :if={@current_attendee.role == :admin}>
+  <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/invite"}>
     <.button variant="secondary">
       Invite people
     </.button>

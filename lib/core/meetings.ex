@@ -98,28 +98,34 @@ defmodule Core.Meetings do
   end
 
   @spec join_meeting(Auth.User.t(), Meeting.t(), binary()) ::
-          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :invalid_code}
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :invalid_code | :expired}
   def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting, code) do
     case Repo.get_by(Invitation, meeting_id: meeting.id, code: code) do
       nil ->
         {:error, :invalid_code}
 
-      _invitation ->
-        %Attendee{}
-        |> Attendee.changeset(%{
-          role: :user,
-          config: %{
-            mode:
-              case meeting.config do
-                %Meeting.Config.Week{} -> :week
-                %Meeting.Config.Day{} -> :day
-                %Meeting.Config.Month{} -> :month
-              end
-          }
-        })
-        |> Ecto.Changeset.put_assoc(:meeting, meeting)
-        |> Ecto.Changeset.put_assoc(:user, current_user)
-        |> Repo.insert()
+      invitation ->
+        case DateTime.compare(DateTime.utc_now(), invitation.expires_at) do
+          :gt ->
+            {:error, :expired}
+
+          _ ->
+            %Attendee{}
+            |> Attendee.changeset(%{
+              role: :user,
+              config: %{
+                mode:
+                  case meeting.config do
+                    %Meeting.Config.Week{} -> :week
+                    %Meeting.Config.Day{} -> :day
+                    %Meeting.Config.Month{} -> :month
+                  end
+              }
+            })
+            |> Ecto.Changeset.put_assoc(:meeting, meeting)
+            |> Ecto.Changeset.put_assoc(:user, current_user)
+            |> Repo.insert()
+        end
     end
   end
 
@@ -232,17 +238,17 @@ defmodule Core.Meetings do
     end
   end
 
-  @spec get_meeting_invitations(Meeting.t()) :: [Invitation.t()]
-  def get_meeting_invitations(%Meeting{} = meeting) do
+  @spec list_meeting_invitations(Meeting.t()) :: [Invitation.t()]
+  def list_meeting_invitations(%Meeting{} = meeting) do
     Ecto.assoc(meeting, :invitations)
     |> order_by(:expires_at)
     |> Repo.all()
     |> Enum.filter(&(DateTime.compare(DateTime.utc_now(), &1.expires_at) == :lt))
   end
 
-  @spec revoke_invitation(Attendee.t(), integer()) ::
+  @spec delete_invitation(Attendee.t(), integer()) ::
           {:ok, Invitation.t()} | {:error, :unauhorized} | {:error, Ecto.Changeset.t()}
-  def revoke_invitation(%Attendee{} = current_attendee, invitation_id) do
+  def delete_invitation(%Attendee{} = current_attendee, invitation_id) do
     with :ok <- ensure_is_admin(current_attendee) do
       Repo.get(Invitation, invitation_id)
       |> Repo.delete()

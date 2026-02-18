@@ -11,7 +11,7 @@ defmodule CoreWeb.Meetings.InviteLive do
         {:ok, push_navigate(socket, to: ~p"/meetings")}
 
       %{role: :admin} = current_attendee ->
-        invitations = Meetings.get_meeting_invitations(meeting)
+        invitations = Meetings.list_meeting_invitations(meeting)
 
         {:ok,
          socket
@@ -36,7 +36,7 @@ defmodule CoreWeb.Meetings.InviteLive do
   def handle_event("create", %{"duration" => duration}, socket) do
     case Meetings.create_invitation(socket.assigns.current_attendee, %{duration: duration}) do
       {:ok, invitation} ->
-        invitations = Meetings.get_meeting_invitations(socket.assigns.meeting)
+        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
 
         {:noreply,
          socket
@@ -50,9 +50,9 @@ defmodule CoreWeb.Meetings.InviteLive do
 
   @impl true
   def handle_event("revoke", %{"id" => invitation_id}, socket) do
-    case Meetings.revoke_invitation(socket.assigns.current_attendee, invitation_id) do
+    case Meetings.delete_invitation(socket.assigns.current_attendee, invitation_id) do
       {:ok, _} ->
-        invitations = Meetings.get_meeting_invitations(socket.assigns.meeting)
+        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
 
         {:noreply,
          socket

@@ -39,6 +39,10 @@ defmodule Core.Factory do
     %Core.Meetings.Attendee.Config.Day{available_hours: []}
   end
 
+  def build(:invitation) do
+    %Core.Meetings.Invitation{}
+  end
+
   # Convenience API
 
   def build(factory_name, attributes) do
