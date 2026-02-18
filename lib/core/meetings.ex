@@ -97,24 +97,30 @@ defmodule Core.Meetings do
     end
   end
 
-  @spec join_meeting(Auth.User.t(), Meeting.t()) ::
-          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
-  def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting) do
-    %Attendee{}
-    |> Attendee.changeset(%{
-      role: :user,
-      config: %{
-        mode:
-          case meeting.config do
-            %Meeting.Config.Week{} -> :week
-            %Meeting.Config.Day{} -> :day
-            %Meeting.Config.Month{} -> :month
-          end
-      }
-    })
-    |> Ecto.Changeset.put_assoc(:meeting, meeting)
-    |> Ecto.Changeset.put_assoc(:user, current_user)
-    |> Repo.insert()
+  @spec join_meeting(Auth.User.t(), Meeting.t(), binary()) ::
+          {:ok, Attendee.t()} | {:error, Ecto.Changeset.t() | :invalid_code}
+  def join_meeting(%Auth.User{} = current_user, %Meeting{} = meeting, code) do
+    case Repo.get_by(Invitation, meeting_id: meeting.id, code: code) do
+      nil ->
+        {:error, :invalid_code}
+
+      _invitation ->
+        %Attendee{}
+        |> Attendee.changeset(%{
+          role: :user,
+          config: %{
+            mode:
+              case meeting.config do
+                %Meeting.Config.Week{} -> :week
+                %Meeting.Config.Day{} -> :day
+                %Meeting.Config.Month{} -> :month
+              end
+          }
+        })
+        |> Ecto.Changeset.put_assoc(:meeting, meeting)
+        |> Ecto.Changeset.put_assoc(:user, current_user)
+        |> Repo.insert()
+    end
   end
 
   @spec update_attendee_role(Attendee.t(), Attendee.t(), Attendee.role()) ::
