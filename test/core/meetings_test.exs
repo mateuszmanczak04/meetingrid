@@ -455,7 +455,7 @@ defmodule Core.MeetingsTest do
   end
 
   describe "delete_invitation/2" do
-    test "revokes invitation successfully" do
+    test "deletes invitation successfully" do
       meeting = insert!(:meeting)
       user = insert!(:user)
       current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :admin)
@@ -470,7 +470,7 @@ defmodule Core.MeetingsTest do
       assert {:ok, _invitation} = Meetings.delete_invitation(current_attendee, invitation.id)
     end
 
-    test "doesn't revoke if attendee is not admin" do
+    test "doesn't delete if attendee is not admin" do
       meeting = insert!(:meeting)
       user = insert!(:user)
       current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :user)
