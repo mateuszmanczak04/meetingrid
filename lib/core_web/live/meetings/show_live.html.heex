@@ -12,6 +12,11 @@
   >
     <.icon name="hero-cog" class="size-4 -translate-y-px" /> Settings
   </.button>
+  <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/invite"}>
+    <.button variant="secondary">
+      Invite people
+    </.button>
+  </.link>
 
   <.button variant="danger" phx-click="leave" id="leave_button">
     <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave

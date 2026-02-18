@@ -1,0 +1,47 @@
+<.link navigate={~p"/meetings/#{@meeting.id}"}>
+  <.button variant="secondary" class="mb-4">
+    <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to meeting
+  </.button>
+</.link>
+
+<h1 class="font-bold text-4xl mb-4">Invitation for {@meeting.title}</h1>
+
+<h1 class="font-bold text-2xl mb-4">Create invitation</h1>
+
+<form phx-submit="create" class="space-y-4 mb-4">
+  <div>
+    <label for="duration" class="block">How long should be valid</label>
+    <select name="duration" id="duration">
+      <option value="hour">1 hour</option>
+      <option value="day">1 day</option>
+      <option value="week">7 days</option>
+      <option value="month">30 days</option>
+      <option value="year">365 days</option>
+    </select>
+  </div>
+
+  <button type="submit" class="bg-primary h-10 px-8">Create</button>
+</form>
+
+<h2 class="text-2xl font-bold mb-2">Active invitations</h2>
+
+<p :if={length(@invitations) == 0} class="text-muted-foreground">
+  There are not active invitations
+</p>
+
+<ul class="space-y-2">
+  <li
+    :for={invitation <- @invitations}
+    class="bg-gray-100 flex items-center justify-between max-w-lg py-2 px-3"
+  >
+    <strong>
+      Code: {invitation.code}
+    </strong>
+    <span>
+      Expires at: {to_string(invitation.expires_at)}
+    </span>
+    <button phx-click="revoke" phx-value-id={invitation.id} class="bg-red-200 px-3 py-1">
+      Revoke
+    </button>
+  </li>
+</ul>

@@ -30,10 +30,11 @@ defmodule CoreWeb.Meetings.JoinLive do
   end
 
   @impl true
-  def handle_event("join", _, socket) do
-    case MeetingServer.join_meeting(socket.assigns.meeting.id, socket.assigns.user) do
+  def handle_event("join", %{"code" => code}, socket) do
+    case MeetingServer.join_meeting(socket.assigns.meeting.id, socket.assigns.user, code) do
       :ok -> {:noreply, push_navigate(socket, to: ~p"/meetings/#{socket.assigns.meeting.id}")}
-      :error -> {:noreply, put_flash(socket, :info, "Unknown error occurred")}
+      {:error, :invalid_code} -> {:noreply, put_flash(socket, :error, "Invalid invitation code")}
+      :error -> {:noreply, put_flash(socket, :error, "Unknown error occurred")}
     end
   end
 end

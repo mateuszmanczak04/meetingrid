@@ -24,9 +24,15 @@ defmodule Core.Meetings.MeetingServerTest do
     user = insert!(:user)
     meeting = insert!(:meeting)
 
+    insert!(:invitation,
+      meeting: meeting,
+      code: "888",
+      expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: 1)
+    )
+
     Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting.id}")
 
-    MeetingServer.join_meeting(meeting.id, user)
+    MeetingServer.join_meeting(meeting.id, user, "888")
 
     assert_receive {:state_updated, state}
     assert length(state.attendees) == 1
@@ -71,7 +77,13 @@ defmodule Core.Meetings.MeetingServerTest do
     meeting_config = build(:meeting_config_week)
     meeting = insert!(:meeting, config: meeting_config)
 
-    MeetingServer.join_meeting(meeting.id, user)
+    insert!(:invitation,
+      meeting: meeting,
+      code: "777",
+      expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: 1)
+    )
+
+    MeetingServer.join_meeting(meeting.id, user, "777")
 
     attendee = Meetings.get_attendee_by(user_id: user.id, meeting_id: meeting.id)
 

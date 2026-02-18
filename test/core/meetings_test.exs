@@ -215,17 +215,43 @@ defmodule Core.MeetingsTest do
   end
 
   describe "join_meeting/3" do
-    test "user can join meeting" do
+    test "user can't join with invalid code" do
       user = insert!(:user)
       meeting = insert!(:meeting)
 
-      assert {:ok, attendee} = Meetings.join_meeting(user, meeting)
+      assert {:error, :invalid_code} = Meetings.join_meeting(user, meeting, "123456")
+    end
+
+    test "user can join meeting with valid code" do
+      user = insert!(:user)
+      meeting = insert!(:meeting)
+
+      insert!(:invitation, %{
+        code: "464646",
+        expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: 1),
+        meeting: meeting
+      })
+
+      assert {:ok, attendee} = Meetings.join_meeting(user, meeting, "464646")
 
       assert attendee.user_id == user.id
       assert attendee.meeting_id == meeting.id
       assert attendee.role == :user
       assert is_struct(attendee.config, Meetings.Attendee.Config.Week)
       assert attendee.config.available_days == []
+    end
+
+    test "user can't join with expired invitation" do
+      user = insert!(:user)
+      meeting = insert!(:meeting)
+
+      insert!(:invitation, %{
+        code: "464646",
+        expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: -1),
+        meeting: meeting
+      })
+
+      assert {:error, :expired} = Meetings.join_meeting(user, meeting, "464646")
     end
   end
 
@@ -368,6 +394,95 @@ defmodule Core.MeetingsTest do
 
     test "user cannot kick themselves", %{regular: regular} do
       assert {:error, :unauthorized} = Meetings.kick_attendee(regular, regular)
+    end
+  end
+
+  describe "create_invitation/2" do
+    test "creates invitation successfully" do
+      meeting = insert!(:meeting)
+      user = insert!(:user)
+      current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :admin)
+
+      assert {:ok, _invitation} =
+               Meetings.create_invitation(current_attendee, %{duration: "hour"})
+    end
+
+    test "fails if attendee is not admin" do
+      meeting = insert!(:meeting)
+      user = insert!(:user)
+      current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :user)
+
+      assert {:error, :unauthorized} =
+               Meetings.create_invitation(current_attendee, %{duration: "hour"})
+    end
+  end
+
+  describe "list_meeting_invitations/1" do
+    test "returns only active invitations" do
+      meeting = insert!(:meeting)
+
+      now = DateTime.utc_now(:second)
+
+      insert!(:invitation,
+        meeting: meeting,
+        code: "123",
+        expires_at: DateTime.shift(now, hour: 1)
+      )
+
+      insert!(:invitation,
+        meeting: meeting,
+        code: "123",
+        expires_at: DateTime.shift(now, day: 1)
+      )
+
+      insert!(:invitation,
+        meeting: meeting,
+        code: "123",
+        expires_at: DateTime.shift(now, month: 1)
+      )
+
+      invitation_expired =
+        insert!(:invitation,
+          meeting: meeting,
+          code: "123",
+          expires_at: DateTime.shift(now, day: -1)
+        )
+
+      invitations = Meetings.list_meeting_invitations(meeting)
+      assert length(invitations) == 3
+      assert not Enum.any?(invitations, &(&1.id == invitation_expired.id))
+    end
+  end
+
+  describe "delete_invitation/2" do
+    test "deletes invitation successfully" do
+      meeting = insert!(:meeting)
+      user = insert!(:user)
+      current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :admin)
+
+      invitation =
+        insert!(:invitation,
+          meeting: meeting,
+          code: "890",
+          expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: 1)
+        )
+
+      assert {:ok, _invitation} = Meetings.delete_invitation(current_attendee, invitation.id)
+    end
+
+    test "doesn't delete if attendee is not admin" do
+      meeting = insert!(:meeting)
+      user = insert!(:user)
+      current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :user)
+
+      invitation =
+        insert!(:invitation,
+          meeting: meeting,
+          code: "890",
+          expires_at: DateTime.utc_now(:second) |> DateTime.shift(day: 1)
+        )
+
+      assert {:error, :unauthorized} = Meetings.delete_invitation(current_attendee, invitation.id)
     end
   end
 end

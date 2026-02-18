@@ -24,6 +24,7 @@ defmodule CoreWeb.Router do
       scope "/" do
         pipe_through [CoreWeb.Plugs.RequireMeeting]
         live "/:id", ShowLive
+        live "/:id/invite", InviteLive
         live "/:id/join", JoinLive
       end
     end
