@@ -23,9 +23,9 @@ defmodule Core.Meetings.Invitation do
   defp validate_expires_at_in_the_future(changeset) do
     expires_at = get_change(changeset, :expires_at)
 
-    case DateTime.compare(expires_at, DateTime.utc_now()) do
-      :gt -> changeset
-      :lt -> add_error(changeset, :expires_at, "Invitation expiry date must be in the future")
+    case DateTime.compare(DateTime.utc_now(), expires_at) do
+      :gt -> add_error(changeset, :expires_at, "Invitation expiry date must be in the future")
+      _ -> changeset
     end
   end
 end
