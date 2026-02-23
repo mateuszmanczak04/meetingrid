@@ -1,4 +1,4 @@
-defmodule CoreWeb.Plugs.RequireCurrentUser do
+defmodule CoreWeb.Plugs.RequireCurrentUserId do
   @behaviour Plug
 
   import Plug.Conn
@@ -7,16 +7,18 @@ defmodule CoreWeb.Plugs.RequireCurrentUser do
   @impl true
   def init(opts), do: opts
 
+  @default_user_name "Unknown"
+
   @impl true
   def call(%Plug.Conn{} = conn, _opts) do
-    user =
-      conn
-      |> get_session(:user)
-      |> case do
-        %Auth.User{} = existing -> Core.Repo.reload(existing)
-        _ -> Auth.create_user!(%{name: "Unknown"})
+    current_user =
+      with user_id when is_integer(user_id) <- get_session(conn, :user_id),
+           %Auth.User{} = existing_user <- Core.Auth.get_user(user_id) do
+        existing_user
+      else
+        nil -> Auth.create_user!(%{name: @default_user_name})
       end
 
-    put_session(conn, :user, user)
+    put_session(conn, :user_id, current_user.id)
   end
 end

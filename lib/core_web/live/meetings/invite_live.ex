@@ -1,9 +1,11 @@
 defmodule CoreWeb.Meetings.InviteLive do
   use CoreWeb, :live_view
   alias Core.Meetings
+  alias Core.Auth
 
   @impl true
-  def mount(%{"id" => meeting_id}, %{"user" => current_user}, socket) do
+  def mount(%{"id" => meeting_id}, %{"user_id" => current_user_id}, socket) do
+    current_user = Auth.get_user(current_user_id)
     meeting = Meetings.get_meeting(meeting_id, preload: [:invitations])
 
     case Meetings.check_if_already_joined(current_user, meeting) do

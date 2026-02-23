@@ -5,8 +5,8 @@ defmodule CoreWeb.Meetings.IndexLive do
   alias Core.Auth
 
   @impl true
-  def mount(_params, %{"user" => user}, socket) do
-    user = Auth.get_user(user.id, preload: [attendees: :meeting])
+  def mount(_params, %{"user_id" => current_user_id}, socket) do
+    user = Auth.get_user(current_user_id, preload: [attendees: :meeting])
     {:ok, socket |> assign(:user, user) |> assign(:attendees, user.attendees)}
   end
 

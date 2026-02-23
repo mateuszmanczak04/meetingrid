@@ -8,7 +8,7 @@ defmodule CoreWeb.Router do
     plug :put_root_layout, html: {CoreWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug CoreWeb.Plugs.RequireCurrentUser
+    plug CoreWeb.Plugs.RequireCurrentUserId
   end
 
   scope "/", CoreWeb do

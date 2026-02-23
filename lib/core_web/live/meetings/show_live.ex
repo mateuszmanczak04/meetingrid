@@ -2,12 +2,14 @@ defmodule CoreWeb.Meetings.ShowLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
   alias Core.Meetings.Meeting
+  alias Core.Auth
 
   @impl true
-  def mount(%{"id" => meeting_id}, %{"user" => user}, socket) do
+  def mount(%{"id" => meeting_id}, %{"user_id" => current_user_id}, socket) do
+    current_user = Auth.get_user(current_user_id)
     meeting_id = String.to_integer(meeting_id)
 
-    case MeetingServer.check_if_already_joined(meeting_id, user) do
+    case MeetingServer.check_if_already_joined(meeting_id, current_user) do
       {false, _state} ->
         {:ok, push_navigate(socket, to: ~p"/meetings/#{meeting_id}/join")}
 

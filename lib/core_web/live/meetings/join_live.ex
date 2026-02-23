@@ -1,15 +1,17 @@
 defmodule CoreWeb.Meetings.JoinLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
+  alias Core.Auth
 
   @impl true
-  def mount(%{"id" => meeting_id}, %{"user" => user}, socket) do
+  def mount(%{"id" => meeting_id}, %{"user_id" => current_user_id}, socket) do
+    current_user = Auth.get_user(current_user_id)
     meeting_id = String.to_integer(meeting_id)
 
-    case MeetingServer.check_if_already_joined(meeting_id, user) do
+    case MeetingServer.check_if_already_joined(meeting_id, current_user) do
       {false, state} ->
         Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
-        {:ok, socket |> assign(:meeting, state.meeting) |> assign(:user, user)}
+        {:ok, socket |> assign(:meeting, state.meeting) |> assign(:user, current_user)}
 
       {_, _} ->
         {:ok, push_navigate(socket, to: ~p"/meetings/#{meeting_id}")}
