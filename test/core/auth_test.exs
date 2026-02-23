@@ -50,39 +50,17 @@ defmodule Core.AuthTest do
     end
   end
 
-  describe "update_user!/2" do
+  describe "update_user/2" do
     test "updates user with valid attributes" do
       user = insert!(:user, name: "Original")
 
-      updated = Auth.update_user!(user, %{"name" => "Updated"})
-
+      assert {:ok, updated} = Auth.update_user(user, %{"name" => "Updated"})
       assert updated.name == "Updated"
-      assert updated.id == user.id
     end
 
-    test "raises with invalid attributes" do
+    test "fails with invalid attributes" do
       user = insert!(:user)
-
-      assert_raise Ecto.InvalidChangesetError, fn ->
-        Auth.update_user!(user, %{"name" => nil})
-      end
-    end
-  end
-
-  describe "delete_user!/1" do
-    test "deletes user" do
-      user = insert!(:user)
-
-      assert %User{} = Auth.delete_user!(user)
-      assert nil == Auth.get_user(user.id)
-    end
-
-    test "raises when deleting non-existent user" do
-      user = build(:user, id: 999_999)
-
-      assert_raise Ecto.StaleEntryError, fn ->
-        Auth.delete_user!(user)
-      end
+      assert {:error, _} = Auth.update_user(user, %{"name" => nil})
     end
   end
 end

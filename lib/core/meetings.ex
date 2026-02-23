@@ -8,6 +8,14 @@ defmodule Core.Meetings do
   alias Core.Meetings.Attendee
   alias Core.Meetings.Invitation
 
+  @spec list_user_meetings(Auth.User.t()) :: [Meeting.t()]
+  def list_user_meetings(%Auth.User{} = user) do
+    user
+    |> Ecto.assoc(:meetings)
+    |> order_by([:inserted_at])
+    |> Repo.all()
+  end
+
   @spec get_meeting(Meeting.id(), keyword()) :: Meeting.t() | nil
   def get_meeting(id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])

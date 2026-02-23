@@ -6,6 +6,12 @@
   </.button>
 </.link>
 
+<.link navigate={~p"/settings"}>
+  <.button class="mt-4" variant="secondary">
+    <.icon name="hero-cog" class="size-4 -translate-y-px" /> User settings
+  </.button>
+</.link>
+
 <section class="grid grid-cols-3 gap-4 mt-4">
   <%= for attendee <- @attendees do %>
     <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">

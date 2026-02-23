@@ -17,6 +17,8 @@ defmodule CoreWeb.Router do
     get "/", PageController, :index
     get "/privacy", PageController, :privacy
 
+    live "/settings", SettingsLive
+
     scope "/meetings", Meetings do
       live "/", IndexLive
       live "/new", NewLive

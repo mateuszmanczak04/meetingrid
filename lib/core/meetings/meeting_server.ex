@@ -98,6 +98,17 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.cast(via_tuple(meeting_id), {:delete_meeting, current_attendee})
   end
 
+  @spec reload_and_broadcast_if_running(Meeting.id()) :: :o
+  def reload_and_broadcast_if_running(meeting_id) do
+    case Registry.lookup(@registry_name, meeting_id) do
+      [{_pid, nil}] ->
+        GenServer.cast(via_tuple(meeting_id), :reload_and_broadcast)
+
+      [] ->
+        :ok
+    end
+  end
+
   # Callbacks
 
   @impl true
@@ -194,6 +205,11 @@ defmodule Core.Meetings.MeetingServer do
       {:error, _} ->
         {:noreply, state}
     end
+  end
+
+  @impl true
+  def handle_cast(:reload_and_broadcast, state) do
+    reload_and_broadcast(state.meeting)
   end
 
   # Private utilities
