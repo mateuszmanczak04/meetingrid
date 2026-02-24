@@ -1,37 +1,15 @@
 defmodule CoreWeb.Meetings.InviteLive do
   use CoreWeb, :live_view
   alias Core.Meetings
-  alias Core.Auth
+
+  on_mount {CoreWeb.Live.Hooks.MeetingAccess, :meeting_exists}
+  on_mount {CoreWeb.Live.Hooks.MeetingAccess, :user_joined}
+  on_mount {CoreWeb.Live.Hooks.MeetingAccess, :user_is_admin}
 
   @impl true
-  def mount(%{"id" => meeting_id}, %{"user_id" => current_user_id}, socket) do
-    current_user = Auth.get_user(current_user_id)
-    meeting = Meetings.get_meeting(meeting_id, preload: [:invitations])
-
-    case Meetings.check_if_already_joined(current_user, meeting) do
-      false ->
-        {:ok, push_navigate(socket, to: ~p"/meetings")}
-
-      %{role: :admin} = current_attendee ->
-        invitations = Meetings.list_meeting_invitations(meeting)
-
-        {:ok,
-         socket
-         |> assign(:meeting, meeting)
-         |> assign(:current_attendee, current_attendee)
-         |> assign(:invitations, invitations)}
-
-      %{role: :user} = _current_attendee ->
-        {:ok,
-         socket
-         |> put_flash(:error, "No permission")
-         |> push_navigate(to: ~p"/meetings/#{meeting_id}")}
-    end
-  end
-
-  @impl true
-  def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+  def mount(_params, _session, socket) do
+    invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
+    {:ok, assign(socket, :invitations, invitations)}
   end
 
   @impl true

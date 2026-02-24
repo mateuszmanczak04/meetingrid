@@ -10,7 +10,7 @@ defmodule Core.Meetings.MeetingServerTest do
     meeting = insert!(:meeting)
     admin = insert!(:attendee, user: user, meeting: meeting, role: :admin)
 
-    MeetingServer.check_if_already_joined(meeting.id, user)
+    MeetingServer.get_state(meeting.id)
 
     [{pid, _}] = Registry.lookup(MeetingServer.registry_name(), meeting.id)
     ref = Process.monitor(pid)
@@ -50,7 +50,7 @@ defmodule Core.Meetings.MeetingServerTest do
     attendee_config2 = build(:attendee_config_week, available_days: [2, 3, 4])
     insert!(:attendee, user: user2, meeting: meeting, role: :user, config: attendee_config2)
 
-    {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
+    state = MeetingServer.get_state(meeting.id)
 
     assert Enum.sort(state.common_days) == [2, 3]
   end
@@ -67,7 +67,7 @@ defmodule Core.Meetings.MeetingServerTest do
     attendee_config2 = build(:attendee_config_day, available_hours: [10, 11, 12, 13])
     insert!(:attendee, user: user2, meeting: meeting, role: :user, config: attendee_config2)
 
-    {_attendee, state} = MeetingServer.check_if_already_joined(meeting.id, user1)
+    state = MeetingServer.get_state(meeting.id)
 
     assert Enum.sort(state.common_hours) == [10, 11, 12]
   end
@@ -108,7 +108,7 @@ defmodule Core.Meetings.MeetingServerTest do
     MeetingServer.update_meeting(meeting.id, regular, %{title: "Hacked"})
 
     # Server still works
-    assert {_attendee, _state} = MeetingServer.check_if_already_joined(meeting.id, user)
+    assert _state = MeetingServer.get_state(meeting.id)
   end
 
   test "kicked attendee receives notification" do

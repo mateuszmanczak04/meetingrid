@@ -4,15 +4,13 @@ defmodule CoreWeb.SettingsLive do
   alias Core.Meetings
 
   @impl true
-  def mount(_params, %{"user_id" => current_user_id}, socket) do
-    current_user = Auth.get_user(current_user_id)
-
+  def mount(_params, _session, socket) do
     form =
-      current_user
+      socket.assigns.current_user
       |> Auth.change_user()
       |> to_form()
 
-    {:ok, assign(socket, current_user: current_user, form: form)}
+    {:ok, assign(socket, :form, form)}
   end
 
   @impl true

@@ -31,13 +31,6 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.start_link(__MODULE__, meeting_id, name: via_tuple(meeting_id))
   end
 
-  @spec check_if_already_joined(Meeting.id(), User.t()) ::
-          {false, state()} | {Attendee.t(), state()}
-  def check_if_already_joined(meeting_id, %User{} = user) do
-    {:ok, _pid} = ensure_started(meeting_id)
-    GenServer.call(via_tuple(meeting_id), {:check_if_already_joined, user})
-  end
-
   @spec join_meeting(Meeting.id(), User.t(), binary()) ::
           :ok | :error | {:error, :invalid_code} | {:error, :expired}
   def join_meeting(meeting_id, %User{} = user, code) do
@@ -50,6 +43,12 @@ defmodule Core.Meetings.MeetingServer do
   def leave_meeting(meeting_id, %Attendee{} = current_attendee) do
     {:ok, _pid} = ensure_started(meeting_id)
     GenServer.call(via_tuple(meeting_id), {:leave_meeting, current_attendee})
+  end
+
+  @spec get_state(Meeting.id()) :: state()
+  def get_state(meeting_id) do
+    {:ok, _pid} = ensure_started(meeting_id)
+    GenServer.call(via_tuple(meeting_id), :get_state)
   end
 
   @spec toggle_available_day(Meeting.id(), Attendee.t(), Attendee.Config.Week.day()) :: :ok
@@ -98,7 +97,7 @@ defmodule Core.Meetings.MeetingServer do
     GenServer.cast(via_tuple(meeting_id), {:delete_meeting, current_attendee})
   end
 
-  @spec reload_and_broadcast_if_running(Meeting.id()) :: :o
+  @spec reload_and_broadcast_if_running(Meeting.id()) :: :ok
   def reload_and_broadcast_if_running(meeting_id) do
     case Registry.lookup(@registry_name, meeting_id) do
       [{_pid, nil}] ->
@@ -116,14 +115,6 @@ defmodule Core.Meetings.MeetingServer do
     case Meetings.get_meeting(meeting_id) do
       nil -> {:error, :meeting_not_found}
       meeting -> {:ok, reload_state(meeting)}
-    end
-  end
-
-  @impl true
-  def handle_call({:check_if_already_joined, user}, _from, state) do
-    case Meetings.check_if_already_joined(user, state.meeting) do
-      %Attendee{} = current_attendee -> {:reply, {current_attendee, state}, state}
-      false -> {:reply, {false, state}, state}
     end
   end
 
@@ -149,6 +140,11 @@ defmodule Core.Meetings.MeetingServer do
       {:error, _} ->
         {:reply, :error, state}
     end
+  end
+
+  @impl true
+  def handle_call(:get_state, _from, state) do
+    {:reply, state, state}
   end
 
   @impl true
@@ -209,7 +205,7 @@ defmodule Core.Meetings.MeetingServer do
 
   @impl true
   def handle_cast(:reload_and_broadcast, state) do
-    reload_and_broadcast(state.meeting)
+    {:noreply, reload_and_broadcast(state.meeting)}
   end
 
   # Private utilities

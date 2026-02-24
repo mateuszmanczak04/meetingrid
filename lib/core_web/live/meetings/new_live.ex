@@ -1,17 +1,10 @@
 defmodule CoreWeb.Meetings.NewLive do
   use CoreWeb, :live_view
   alias Core.Meetings
-  alias Core.Auth
 
   @impl true
-  def mount(_params, %{"user_id" => current_user_id}, socket) do
-    current_user = Auth.get_user(current_user_id)
-    {:ok, socket |> assign(:current_user, current_user)}
-  end
-
-  @impl true
-  def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+  def mount(_params, _session, socket) do
+    {:ok, socket}
   end
 
   @impl true

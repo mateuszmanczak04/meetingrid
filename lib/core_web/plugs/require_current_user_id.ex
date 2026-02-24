@@ -19,6 +19,6 @@ defmodule CoreWeb.Plugs.RequireCurrentUserId do
         nil -> Auth.create_user!(%{name: @default_user_name})
       end
 
-    put_session(conn, :user_id, current_user.id)
+    put_session(conn, :current_user_id, current_user.id)
   end
 end

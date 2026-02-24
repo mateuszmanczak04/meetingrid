@@ -16,6 +16,17 @@ defmodule Core.Meetings do
     |> Repo.all()
   end
 
+  @spec list_user_attendees(Auth.User.t()) :: [Attendee.t()]
+  def list_user_attendees(%Auth.User{} = user, opts \\ []) do
+    preload = Keyword.get(opts, :preload, [])
+
+    user
+    |> Ecto.assoc(:attendees)
+    |> order_by([:inserted_at])
+    |> Repo.all()
+    |> Repo.preload(preload)
+  end
+
   @spec get_meeting(Meeting.id(), keyword()) :: Meeting.t() | nil
   def get_meeting(id, opts \\ []) do
     preload = Keyword.get(opts, :preload, [])
