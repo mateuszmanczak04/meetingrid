@@ -419,7 +419,7 @@ defmodule Core.MeetingsTest do
       current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :admin)
 
       assert {:ok, _invitation} =
-               Meetings.create_invitation(current_attendee, %{duration: "hour"})
+               Meetings.create_invitation(current_attendee, %{"duration" => "hour"})
     end
 
     test "fails if attendee is not admin" do
@@ -428,7 +428,7 @@ defmodule Core.MeetingsTest do
       current_attendee = insert!(:attendee, meeting: meeting, user: user, role: :user)
 
       assert {:error, :unauthorized} =
-               Meetings.create_invitation(current_attendee, %{duration: "hour"})
+               Meetings.create_invitation(current_attendee, %{"duration" => "hour"})
     end
   end
 

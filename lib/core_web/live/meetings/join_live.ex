@@ -12,7 +12,17 @@ defmodule CoreWeb.Meetings.JoinLive do
       Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{socket.assigns.meeting.id}")
     end
 
-    {:ok, socket}
+    data = %{}
+    types = %{code: :binary}
+    params = %{code: ""}
+
+    form =
+      {data, types}
+      |> Ecto.Changeset.cast(params, Map.keys(types))
+      |> Ecto.Changeset.validate_required(Map.keys(types))
+      |> to_form(as: :join_form)
+
+    {:ok, assign(socket, :form, form)}
   end
 
   @impl true
@@ -26,7 +36,21 @@ defmodule CoreWeb.Meetings.JoinLive do
   end
 
   @impl true
-  def handle_event("join", %{"code" => code}, socket) do
+  def handle_event("validate", %{"join_form" => attrs}, socket) do
+    data = %{}
+    types = %{code: :binary}
+
+    form =
+      {data, types}
+      |> Ecto.Changeset.cast(attrs, Map.keys(types))
+      |> Ecto.Changeset.validate_required(Map.keys(types))
+      |> to_form(as: :join_form, action: :validate)
+
+    {:noreply, assign(socket, :form, form)}
+  end
+
+  @impl true
+  def handle_event("submit", %{"join_form" => %{"code" => code}}, socket) do
     {:noreply, do_join(socket, code)}
   end
 

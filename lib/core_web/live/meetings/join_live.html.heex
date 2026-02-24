@@ -9,10 +9,9 @@
 
 <p class="mb-4 text-muted-foreground">{@meeting.title}</p>
 
-<form phx-submit="join" class="max-w-xs">
-  <.input type="text" name="code" id="code" label="Access code" value="" class="mb-4" />
-
+<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-xs">
+  <.input field={@form[:code]} label="Access code" class="mb-4" />
   <.button type="submit" id="join-button">
     Join meeting
   </.button>
-</form>
+</.form>
