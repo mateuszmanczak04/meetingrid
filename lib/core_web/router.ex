@@ -26,6 +26,7 @@ defmodule CoreWeb.Router do
         live "/meetings/", Meetings.IndexLive
         live "/meetings/new", Meetings.NewLive
         live "/meetings/:id", Meetings.ShowLive
+        live "/meetings/:id/edit", Meetings.EditLive
         live "/meetings/:id/invite", Meetings.InviteLive
         live "/meetings/:id/join", Meetings.JoinLive
       end

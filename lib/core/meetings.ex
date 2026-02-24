@@ -37,6 +37,11 @@ defmodule Core.Meetings do
     end
   end
 
+  @spec change_meeting(Meeting.t(), map()) :: Ecto.Changeset.t()
+  def change_meeting(%Meeting{} = meeting, %{} = attrs \\ %{}) do
+    Meeting.changeset(meeting, attrs)
+  end
+
   @spec create_meeting(Auth.User.t(), map()) :: {:ok, Attendee.t()} | {:error, Ecto.Changeset.t()}
   def create_meeting(%Auth.User{} = current_user, attrs) do
     Repo.transact(fn ->
@@ -232,7 +237,7 @@ defmodule Core.Meetings do
 
   @spec create_invitation(Attendee.t(), %{duration: binary()}) ::
           {:ok, Invitation.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def create_invitation(%Attendee{} = current_attendee, %{duration: duration}) do
+  def create_invitation(%Attendee{} = current_attendee, %{"duration" => duration}) do
     with :ok <- ensure_is_admin(current_attendee) do
       expires_at = DateTime.utc_now()
 

@@ -9,43 +9,14 @@ defmodule CoreWeb.Meetings.ShowLive do
   @impl true
   def mount(_params, _session, socket) do
     meeting_id = socket.assigns.meeting.id
-    Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{meeting_id}")
-    Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
 
-    MeetingServer.reload_and_broadcast_if_running(meeting_id)
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{socket.assigns.meeting.id}")
+      Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
+    end
 
     state = MeetingServer.get_state(meeting_id)
     {:ok, assign_state_based_on_config(socket, state)}
-  end
-
-  @impl true
-  def handle_info({:state_updated, state}, socket) do
-    current_attendee =
-      Enum.find(
-        state.attendees,
-        &(&1.id === socket.assigns.current_attendee.id)
-      )
-
-    {:noreply,
-     socket
-     |> assign_state_based_on_config(state)
-     |> assign(:current_attendee, current_attendee)}
-  end
-
-  @impl true
-  def handle_info(:you_were_kicked, socket) do
-    {:noreply,
-     socket
-     |> put_flash(:error, "You were kicked from the meeting")
-     |> push_navigate(to: ~p"/meetings")}
-  end
-
-  @impl true
-  def handle_info(:meeting_deleted, socket) do
-    {:noreply,
-     socket
-     |> put_flash(:info, "This meeting has been deleted")
-     |> push_navigate(to: ~p"/meetings")}
   end
 
   @impl true
@@ -86,17 +57,6 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("update_meeting", %{"title" => title}, socket) do
-    MeetingServer.update_meeting(
-      socket.assigns.meeting.id,
-      socket.assigns.current_attendee,
-      %{title: title}
-    )
-
-    {:noreply, socket}
-  end
-
-  @impl true
   def handle_event("leave", _params, socket) do
     case MeetingServer.leave_meeting(
            socket.assigns.meeting.id,
@@ -120,7 +80,7 @@ defmodule CoreWeb.Meetings.ShowLive do
   @impl true
   def handle_event("kick_attendee", %{"attendee_id" => attendee_id}, socket) do
     attendee_to_kick =
-      Enum.find(socket.assigns.attendees, &(to_string(&1.id) === attendee_id))
+      Enum.find(socket.assigns.attendees, &(to_string(&1.id) == attendee_id))
 
     MeetingServer.kick_attendee(
       socket.assigns.meeting.id,
@@ -132,13 +92,33 @@ defmodule CoreWeb.Meetings.ShowLive do
   end
 
   @impl true
-  def handle_event("delete", _, socket) do
-    MeetingServer.delete_meeting(
-      socket.assigns.meeting.id,
-      socket.assigns.current_attendee
-    )
+  def handle_info({:state_updated, state}, socket) do
+    current_attendee =
+      Enum.find(
+        state.attendees,
+        &(&1.id == socket.assigns.current_attendee.id)
+      )
 
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign_state_based_on_config(state)
+     |> assign(:current_attendee, current_attendee)}
+  end
+
+  @impl true
+  def handle_info(:you_were_kicked, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "You were kicked from the meeting")
+     |> push_navigate(to: ~p"/meetings")}
+  end
+
+  @impl true
+  def handle_info(:meeting_deleted, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "This meeting has been deleted")
+     |> push_navigate(to: ~p"/meetings")}
   end
 
   defp assign_state_based_on_config(socket, state) do
@@ -153,5 +133,5 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   defp get_mode(%Meeting.Config.Day{}), do: :day
   defp get_mode(%Meeting.Config.Week{}), do: :week
-  defp get_mode(%Meeting.Config.Month{}), do: :week
+  defp get_mode(%Meeting.Config.Month{}), do: :month
 end

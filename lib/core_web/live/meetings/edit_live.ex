@@ -1,7 +1,8 @@
-defmodule CoreWeb.Meetings.InviteLive do
+defmodule CoreWeb.Meetings.EditLive do
   use CoreWeb, :live_view
-  alias Core.Meetings
+  alias Core.Meetings.MeetingServer
   alias Core.Meetings.Meeting
+  alias Core.Meetings
 
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :meeting_exists}
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :user_joined}
@@ -14,52 +15,45 @@ defmodule CoreWeb.Meetings.InviteLive do
       Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
     end
 
-    # In case of later adding more options to invitations, it may be
-    # worth to replace schemaless changeset with regular one
-    data = %{}
-    types = %{duration: :binary}
-    params = %{duration: "day"}
-
     form =
-      {data, types}
-      |> Ecto.Changeset.cast(params, Map.keys(types))
-      |> Ecto.Changeset.validate_required(Map.keys(types))
-      |> to_form(as: :invitation)
+      socket.assigns.meeting
+      |> Meetings.change_meeting(%{})
+      |> to_form()
 
-    invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
-    {:ok, assign(socket, invitations: invitations, form: form)}
+    {:ok, assign(socket, :form, form)}
   end
 
   @impl true
-  def handle_event("create", %{"invitation" => attrs}, socket) do
-    case Meetings.create_invitation(socket.assigns.current_attendee, attrs) do
-      {:ok, invitation} ->
-        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
+  def handle_event("validate", %{"meeting" => attrs}, socket) do
+    form =
+      socket.assigns.meeting
+      |> Meetings.change_meeting(attrs)
+      |> to_form(action: :validate)
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Successfully created an invitation, code: #{invitation.code}")
-         |> assign(:invitations, invitations)}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Something went wrong")}
-    end
+    {:noreply, assign(socket, :form, form)}
   end
 
   @impl true
-  def handle_event("revoke", %{"id" => invitation_id}, socket) do
-    case Meetings.delete_invitation(socket.assigns.current_attendee, invitation_id) do
-      {:ok, _} ->
-        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
+  def handle_event("save", %{"meeting" => attrs}, socket) do
+    :ok =
+      MeetingServer.update_meeting(
+        socket.assigns.meeting.id,
+        socket.assigns.current_attendee,
+        attrs
+      )
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Successfully revoked an invitation")
-         |> assign(:invitations, invitations)}
+    {:noreply, socket}
+  end
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Something went wrong")}
-    end
+  @impl true
+  def handle_event("delete", _, socket) do
+    :ok =
+      MeetingServer.delete_meeting(
+        socket.assigns.meeting.id,
+        socket.assigns.current_attendee
+      )
+
+    {:noreply, socket}
   end
 
   @impl true

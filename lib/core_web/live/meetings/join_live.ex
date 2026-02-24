@@ -1,13 +1,28 @@
 defmodule CoreWeb.Meetings.JoinLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
+  alias Core.Meetings.Meeting
 
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :meeting_exists}
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :user_not_joined}
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket}
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Core.PubSub, "meeting:#{socket.assigns.meeting.id}")
+    end
+
+    data = %{}
+    types = %{code: :binary}
+    params = %{code: ""}
+
+    form =
+      {data, types}
+      |> Ecto.Changeset.cast(params, Map.keys(types))
+      |> Ecto.Changeset.validate_required(Map.keys(types))
+      |> to_form(as: :join_form)
+
+    {:ok, assign(socket, :form, form)}
   end
 
   @impl true
@@ -21,7 +36,21 @@ defmodule CoreWeb.Meetings.JoinLive do
   end
 
   @impl true
-  def handle_event("join", %{"code" => code}, socket) do
+  def handle_event("validate", %{"join_form" => attrs}, socket) do
+    data = %{}
+    types = %{code: :binary}
+
+    form =
+      {data, types}
+      |> Ecto.Changeset.cast(attrs, Map.keys(types))
+      |> Ecto.Changeset.validate_required(Map.keys(types))
+      |> to_form(as: :join_form, action: :validate)
+
+    {:noreply, assign(socket, :form, form)}
+  end
+
+  @impl true
+  def handle_event("submit", %{"join_form" => %{"code" => code}}, socket) do
     {:noreply, do_join(socket, code)}
   end
 
@@ -32,4 +61,40 @@ defmodule CoreWeb.Meetings.JoinLive do
       :error -> put_flash(socket, :error, "Unknown error occurred")
     end
   end
+
+  @impl true
+  def handle_info({:state_updated, state}, socket) do
+    current_attendee =
+      Enum.find(
+        state.attendees,
+        &(&1.id == socket.assigns.current_attendee.id)
+      )
+
+    {:noreply,
+     socket
+     |> assign_state_based_on_config(state)
+     |> assign(:current_attendee, current_attendee)}
+  end
+
+  @impl true
+  def handle_info(:meeting_deleted, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:info, "This meeting has been deleted")
+     |> push_navigate(to: ~p"/meetings")}
+  end
+
+  defp assign_state_based_on_config(socket, state) do
+    assign(socket,
+      mode: get_mode(state.meeting.config),
+      meeting: state.meeting,
+      attendees: state.attendees,
+      common_hours: state.common_hours,
+      common_days: state.common_days
+    )
+  end
+
+  defp get_mode(%Meeting.Config.Day{}), do: :day
+  defp get_mode(%Meeting.Config.Week{}), do: :week
+  defp get_mode(%Meeting.Config.Month{}), do: :month
 end
