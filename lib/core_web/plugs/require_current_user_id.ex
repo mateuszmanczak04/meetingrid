@@ -12,7 +12,7 @@ defmodule CoreWeb.Plugs.RequireCurrentUserId do
   @impl true
   def call(%Plug.Conn{} = conn, _opts) do
     current_user =
-      with user_id when is_integer(user_id) <- get_session(conn, :user_id),
+      with user_id when is_integer(user_id) <- get_session(conn, :current_user_id),
            %Auth.User{} = existing_user <- Core.Auth.get_user(user_id) do
         existing_user
       else
