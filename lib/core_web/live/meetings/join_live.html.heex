@@ -1,17 +1,16 @@
-  <.link navigate={~p"/meetings"} class="mb-4">
-    <.button variant="secondary">
-      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
-      Back to meetings list
-    </.button>
-  </.link>
+<.link navigate={~p"/meetings"} class="mb-4">
+  <.button variant="secondary">
+    <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
+    Back to meetings list
+  </.button>
+</.link>
 
 <h1 class="text-2xl font-bold mt-4">Join meeting</h1>
 
 <p class="mb-4 text-muted-foreground">{@meeting.title}</p>
 
 <form phx-submit="join" class="max-w-xs">
-  
-  <.input type="text" name="code" id="code" label="Access code" value="" class="mb-4"/>
+  <.input type="text" name="code" id="code" label="Access code" value="" class="mb-4" />
 
   <.button type="submit" id="join-button">
     Join meeting

@@ -2,6 +2,7 @@ defmodule CoreWeb.Meetings.EditLive do
   use CoreWeb, :live_view
   alias Core.Meetings.MeetingServer
   alias Core.Meetings.Meeting
+  alias Core.Meetings
 
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :meeting_exists}
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :user_joined}
@@ -14,26 +15,43 @@ defmodule CoreWeb.Meetings.EditLive do
       Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
     end
 
-    {:ok, socket}
+    form =
+      socket.assigns.meeting
+      |> Meetings.change_meeting(%{})
+      |> to_form()
+
+    {:ok, assign(socket, :form, form)}
   end
 
   @impl true
-  def handle_event("save", %{"title" => title}, socket) do
-    MeetingServer.update_meeting(
-      socket.assigns.meeting.id,
-      socket.assigns.current_attendee,
-      %{title: title}
-    )
+  def handle_event("validate", %{"meeting" => attrs}, socket) do
+    form =
+      socket.assigns.meeting
+      |> Meetings.change_meeting(attrs)
+      |> to_form(action: :validate)
+
+    {:noreply, assign(socket, :form, form)}
+  end
+
+  @impl true
+  def handle_event("save", %{"meeting" => attrs}, socket) do
+    :ok =
+      MeetingServer.update_meeting(
+        socket.assigns.meeting.id,
+        socket.assigns.current_attendee,
+        attrs
+      )
 
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("delete", _, socket) do
-    MeetingServer.delete_meeting(
-      socket.assigns.meeting.id,
-      socket.assigns.current_attendee
-    )
+    :ok =
+      MeetingServer.delete_meeting(
+        socket.assigns.meeting.id,
+        socket.assigns.current_attendee
+      )
 
     {:noreply, socket}
   end
