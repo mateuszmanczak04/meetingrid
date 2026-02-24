@@ -237,7 +237,7 @@ defmodule Core.Meetings do
 
   @spec create_invitation(Attendee.t(), %{duration: binary()}) ::
           {:ok, Invitation.t()} | {:error, Ecto.Changeset.t()} | {:error, :unauthorized}
-  def create_invitation(%Attendee{} = current_attendee, %{duration: duration}) do
+  def create_invitation(%Attendee{} = current_attendee, %{"duration" => duration}) do
     with :ok <- ensure_is_admin(current_attendee) do
       expires_at = DateTime.utc_now()
 

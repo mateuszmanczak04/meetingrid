@@ -6,12 +6,11 @@
 
 <h2 class="font-bold text-2xl mb-4">Create invitation</h2>
 
-<form phx-submit="create" class="space-y-4 mb-4 max-w-xs">
+<.form for={@form} phx-submit="create" class="space-y-4 mb-4 max-w-xs">
   <.input
     label="How long should be valid"
     type="select"
-    name="duration"
-    id="duration"
+    field={@form[:duration]}
     options={[
       "1 hour": "hour",
       "1 day": "day",
@@ -19,10 +18,11 @@
       "30 days": "month",
       "365 days": "year"
     ]}
-    value="hour"
   />
-  <.button type="submit" class="bg-primary h-10 px-8">Create</.button>
-</form>
+  <.button type="submit">
+    <.icon name="hero-plus" class="size-4 shrink-0" /> Create
+  </.button>
+</.form>
 
 <h2 class="text-2xl font-bold mb-4">Active invitations</h2>
 

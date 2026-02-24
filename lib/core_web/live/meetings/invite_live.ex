@@ -14,13 +14,25 @@ defmodule CoreWeb.Meetings.InviteLive do
       Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
     end
 
+    # In case of later adding more options to invitations, it may be
+    # worth to replace schemaless changeset with regular one
+    data = %{}
+    types = %{duration: :binary}
+    params = %{duration: "day"}
+
+    form =
+      {data, types}
+      |> Ecto.Changeset.cast(params, Map.keys(types))
+      |> Ecto.Changeset.validate_required(Map.keys(types))
+      |> to_form(as: :invitation)
+
     invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
-    {:ok, assign(socket, :invitations, invitations)}
+    {:ok, assign(socket, invitations: invitations, form: form)}
   end
 
   @impl true
-  def handle_event("create", %{"duration" => duration}, socket) do
-    case Meetings.create_invitation(socket.assigns.current_attendee, %{duration: duration}) do
+  def handle_event("create", %{"invitation" => attrs}, socket) do
+    case Meetings.create_invitation(socket.assigns.current_attendee, attrs) do
       {:ok, invitation} ->
         invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
 
