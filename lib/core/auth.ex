@@ -22,15 +22,15 @@ defmodule Core.Auth do
     |> Repo.insert!()
   end
 
-  @spec update_user!(User.t(), map()) :: User.t()
-  def update_user!(%User{} = user, attrs) do
+  @spec update_user(User.t(), map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def update_user(%User{} = user, attrs) do
     user
     |> User.changeset(attrs)
-    |> Repo.update!()
+    |> Repo.update()
   end
 
-  @spec delete_user!(User.t()) :: User.t()
-  def delete_user!(%User{} = user) do
-    Repo.delete!(user)
+  @spec change_user(User.t(), map()) :: Ecto.Changeset.t()
+  def change_user(%User{} = user, attrs \\ %{}) do
+    User.changeset(user, attrs)
   end
 end

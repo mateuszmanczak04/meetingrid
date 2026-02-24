@@ -5,6 +5,21 @@ defmodule Core.MeetingsTest do
   alias Core.Meetings
   alias Core.Meetings.Meeting
 
+  describe "list_user_meetings/1" do
+    test "returns all user's meetings" do
+      user = insert!(:user)
+      meeting1 = insert!(:meeting)
+      insert!(:attendee, user: user, meeting: meeting1)
+      Process.sleep(1)
+      meeting2 = insert!(:meeting)
+      insert!(:attendee, user: user, meeting: meeting2)
+      Process.sleep(1)
+      meeting3 = insert!(:meeting)
+      insert!(:attendee, user: user, meeting: meeting3)
+      assert [meeting1, meeting2, meeting3] == Meetings.list_user_meetings(user)
+    end
+  end
+
   describe "get_meeting/2" do
     test "returns meeting by id" do
       meeting = insert!(:meeting, title: "Team Standup")

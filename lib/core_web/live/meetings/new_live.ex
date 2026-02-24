@@ -3,13 +3,8 @@ defmodule CoreWeb.Meetings.NewLive do
   alias Core.Meetings
 
   @impl true
-  def mount(_params, %{"user" => current_user}, socket) do
-    {:ok, socket |> assign(:current_user, current_user)}
-  end
-
-  @impl true
-  def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+  def mount(_params, _session, socket) do
+    {:ok, socket}
   end
 
   @impl true

@@ -8,7 +8,6 @@ defmodule CoreWeb.Router do
     plug :put_root_layout, html: {CoreWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug CoreWeb.Plugs.RequireCurrentUser
   end
 
   scope "/", CoreWeb do
@@ -17,15 +16,18 @@ defmodule CoreWeb.Router do
     get "/", PageController, :index
     get "/privacy", PageController, :privacy
 
-    scope "/meetings", Meetings do
-      live "/", IndexLive
-      live "/new", NewLive
+    scope "/" do
+      pipe_through [CoreWeb.Plugs.RequireCurrentUserId]
 
-      scope "/" do
-        pipe_through [CoreWeb.Plugs.RequireMeeting]
-        live "/:id", ShowLive
-        live "/:id/invite", InviteLive
-        live "/:id/join", JoinLive
+      live_session :authenticated,
+        on_mount: {CoreWeb.Live.Hooks.UserAuth, :require_current_user} do
+        live "/settings", SettingsLive
+
+        live "/meetings/", Meetings.IndexLive
+        live "/meetings/new", Meetings.NewLive
+        live "/meetings/:id", Meetings.ShowLive
+        live "/meetings/:id/invite", Meetings.InviteLive
+        live "/meetings/:id/join", Meetings.JoinLive
       end
     end
   end
