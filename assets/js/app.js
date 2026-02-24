@@ -22,7 +22,16 @@ import { Socket } from 'phoenix';
 import { LiveSocket } from 'phoenix_live_view';
 import topbar from '../vendor/topbar';
 
-const Hooks = {};
+const Hooks = {
+	CopyToClipboard: {
+		mounted() {
+			this.el.addEventListener('click', () => {
+				const text = this.el.dataset.clipboard;
+				navigator.clipboard.writeText(text);
+			});
+		},
+	},
+};
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute('content');
 let liveSocket = new LiveSocket('/live', Socket, {
