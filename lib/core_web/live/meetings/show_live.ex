@@ -153,5 +153,5 @@ defmodule CoreWeb.Meetings.ShowLive do
 
   defp get_mode(%Meeting.Config.Day{}), do: :day
   defp get_mode(%Meeting.Config.Week{}), do: :week
-  defp get_mode(%Meeting.Config.Month{}), do: :week
+  defp get_mode(%Meeting.Config.Month{}), do: :month
 end

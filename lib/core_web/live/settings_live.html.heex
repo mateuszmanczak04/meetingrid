@@ -4,9 +4,9 @@
   </.button>
 </.link>
 
-<h1 class="font-bold text-4xl mb-4">Settings</h1>
+<h1 class="font-bold text-2xl mb-4">Settings</h1>
 
-<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-lg">
+<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-md">
   <.input field={@form[:name]} placeholder="John Doe" class="mb-4" label="Your Name" />
   <.button type="submit">Save changes</.button>
 </.form>

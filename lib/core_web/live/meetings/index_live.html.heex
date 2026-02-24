@@ -1,42 +1,46 @@
-<h1 class="text-4xl font-bold">Your Meetings</h1>
+<h1 class="text-2xl font-bold mb-4">Your Meetings</h1>
 
-<.link navigate={~p"/meetings/new"}>
-  <.button class="mt-4">
-    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
-  </.button>
-</.link>
+<div class="flex  gap-2">
+  <.link navigate={~p"/meetings/new"} class="mb-4">
+    <.button>
+      <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
+    </.button>
+  </.link>
 
-<.link navigate={~p"/settings"}>
-  <.button class="mt-4" variant="secondary">
-    <.icon name="hero-cog" class="size-4 -translate-y-px" /> User settings
-  </.button>
-</.link>
+  <.link navigate={~p"/settings"}>
+    <.button variant="secondary">
+      <.icon name="hero-cog" class="size-4 -translate-y-px" /> User settings
+    </.button>
+  </.link>
+</div>
 
-<section class="grid grid-cols-3 gap-4 mt-4">
+<section class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
   <%= for attendee <- @attendees do %>
-    <article id={"attendee-#{attendee.id}"} class="p-4 rounded-xl border flex flex-col">
-      <.link navigate={~p"/meetings/#{attendee.meeting.id}"} class="hover:underline">
-        <h2 class="font-semibold text-lg">{attendee.meeting.title}</h2>
-        <p
-          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Day)}
-          class="mb-2 text-sm text-muted-foreground"
-        >
-          🕓 Time of the day
-        </p>
-        <p
-          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
-          class="mb-2 text-sm text-muted-foreground"
-        >
-          📅 Day of the week
-        </p>
+    <.link
+      navigate={~p"/meetings/#{attendee.meeting.id}"}
+      id={"attendee-#{attendee.id}"}
+      class="p-4 rounded-xl border flex flex-col"
+    >
+      <h2 class="font-semibold text-lg">{attendee.meeting.title}</h2>
+      <p
+        :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Day)}
+        class="mb-2 text-sm text-muted-foreground"
+      >
+        🕓 Time of the day
+      </p>
+      <p
+        :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
+        class="mb-2 text-sm text-muted-foreground"
+      >
+        📅 Day of the week
+      </p>
 
-        <p
-          :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
-          class="mb-2 text-sm text-muted-foreground"
-        >
-          📆 Day of the month
-        </p>
-      </.link>
+      <p
+        :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
+        class="mb-2 text-sm text-muted-foreground"
+      >
+        📆 Day of the month
+      </p>
       <ul
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
         class="grid grid-cols-7 gap-x-1 w-fit mb-4"
@@ -48,6 +52,6 @@
         >
         </li>
       </ul>
-    </article>
+    </.link>
   <% end %>
 </section>

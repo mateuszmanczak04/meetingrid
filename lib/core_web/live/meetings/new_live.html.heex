@@ -4,36 +4,43 @@
   </.button>
 </.link>
 
-<h1 class="font-bold text-4xl mb-4">Create a new meeting</h1>
+<h1 class="font-bold text-2xl mb-4">Create a new meeting</h1>
 
-<form phx-submit="create" class="space-y-4">
-  <div>
-    <label class="block">Title</label>
-    <input type="text" type="text" required name="title" placeholder="Beach party" />
-  </div>
+<form phx-submit="create" class="space-y-4 max-w-md">
+  <.input label="Title" name="title" id="title" placeholder="Beach party" value="" required />
 
-  <div>
-    <label for="mode" class="block">Mode</label>
-    <select name="config[mode]" id="mode">
-      <option value="day">🕓 Time of the day</option>
-      <option value="week">📅 Day of the week</option>
-      <option value="month">📆 Day of the month</option>
-    </select>
-  </div>
+  <.input
+    type="select"
+    label="Mode"
+    options={[
+      "🕓 Time of the day": "day",
+      "📅 Day of the week": "week",
+      "📆 Day of the month": "month"
+    ]}
+    value="week"
+    name="config[mode]"
+    id="mode"
+  />
 
-  <div>
-    <label for="include_weekends">Include weekends (only for <i>Day of the week</i> mode)</label>
-    <input type="checkbox" name="config[include_weekends]" id="include_weekends" value="true" />
-  </div>
+  <.input
+    type="checkbox"
+    label="Include weekends (only for Day of the week)"
+    name="config[include_weekends]"
+    id="include_weekends"
+  />
 
-  <div>
-    <label for="days_amount">Days amount (only for <i>Day of the month</i> mode</label>
-    <select name="config[days_amount]" id="days_amount">
-      <option value="28">28</option>
-      <option value="30">️30</option>
-      <option value="31">31</option>
-    </select>
-  </div>
+  <.input
+    type="select"
+    label="Days amount (only for Day of the month)"
+    name="config[days_amount]"
+    id="days_amount"
+    options={[
+      "28": "28",
+      "30": "30",
+      "31": "31"
+    ]}
+    value="30"
+  />
 
-  <button type="submit" class="bg-primary h-10 px-8">Create</button>
+  <.button type="submit">Create meeting</.button>
 </form>

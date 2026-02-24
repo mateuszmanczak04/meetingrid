@@ -233,7 +233,7 @@ defmodule CoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 hover:opacity-90 transition-oapcity cursor-pointer font-medium",
+        "phx-submit-loading:opacity-75 hover:opacity-90 transition-oapcity cursor-pointer font-medium flex items-center gap-1 text-nowrap",
         @size == "default" && "text-sm h-10 px-3 rounded-lg",
         @size == "sm" && "text-xs h-8 px-2 rounded-md",
         @size == "xs" && "text-xs h-6 px-1 rounded-md",

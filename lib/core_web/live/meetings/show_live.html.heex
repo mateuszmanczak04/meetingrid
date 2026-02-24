@@ -1,7 +1,8 @@
-<header class="flex gap-x-2 mb-6">
+<header class="flex flex-wrap gap-2 mb-6">
   <.link navigate={~p"/meetings"}>
     <.button variant="secondary">
-      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to meetings list
+      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
+      Back to meetings list
     </.button>
   </.link>
   <.button
@@ -10,20 +11,21 @@
     phx-click={show_modal(%JS{}, "settings")}
     id="settings_button"
   >
-    <.icon name="hero-cog" class="size-4 -translate-y-px" /> Settings
+    <.icon name="hero-cog" class="size-4 -translate-y-px shrink-0" /> Settings
   </.button>
   <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/invite"}>
     <.button variant="secondary">
-      Invite people
+      <.icon name="hero-user-plus" class="size-4 -translate-y-px shrink-0" /> Invite people
     </.button>
   </.link>
 
   <.button variant="danger" phx-click="leave" id="leave_button">
-    <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px" /> Leave
+    <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px shrink-0" />
+    Leave
   </.button>
 </header>
 
-<h1 class="font-bold text-4xl mb-4">{@meeting.title}</h1>
+<h1 class="font-bold text-2xl mb-4">{@meeting.title}</h1>
 
 <.modal :if={@current_attendee.role == :admin} id="settings">
   <h2 class="text-xl font-semibold">Meeting settings</h2>
