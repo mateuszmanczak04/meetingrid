@@ -5,17 +5,16 @@
       Back to meetings list
     </.button>
   </.link>
-  <.button
-    :if={@current_attendee.role == :admin}
-    variant="secondary"
-    phx-click={show_modal(%JS{}, "settings")}
-    id="settings_button"
-  >
-    <.icon name="hero-cog" class="size-4 -translate-y-px shrink-0" /> Settings
-  </.button>
+
+  <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/edit"}>
+    <.button variant="secondary">
+      <.icon name="hero-cog" class="size-4 -translate-y-px shrink-0" /> Settings
+    </.button>
+  </.link>
+
   <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/invite"}>
     <.button variant="secondary">
-      <.icon name="hero-user-plus" class="size-4 -translate-y-px shrink-0" /> Invite people
+      <.icon name="hero-user-plus" class="size-4 -translate-y-px shrink-0" /> Invitations
     </.button>
   </.link>
 
@@ -26,29 +25,6 @@
 </header>
 
 <h1 class="font-bold text-2xl mb-4">{@meeting.title}</h1>
-
-<.modal :if={@current_attendee.role == :admin} id="settings">
-  <h2 class="text-xl font-semibold">Meeting settings</h2>
-  <form id="update_meeting_form" phx-submit="update_meeting" class="mt-2">
-    <.label for="join_input">Title</.label>
-    <div class="flex items-center mt-2">
-      <.input
-        class="rounded-r-none"
-        id="meeting_title_input"
-        type="text"
-        required
-        name="title"
-        placeholder="Meetup at the bar"
-        value={@meeting.title}
-      />
-      <.button class="rounded-l-none" type="submit">Save</.button>
-    </div>
-  </form>
-
-  <.button id="delete-meeting-button" phx-click="delete" variant="danger" class="mt-6">
-    Delete meeting
-  </.button>
-</.modal>
 
 <table
   :if={@mode == :day}

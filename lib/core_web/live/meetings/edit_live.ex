@@ -1,6 +1,6 @@
-defmodule CoreWeb.Meetings.InviteLive do
+defmodule CoreWeb.Meetings.EditLive do
   use CoreWeb, :live_view
-  alias Core.Meetings
+  alias Core.Meetings.MeetingServer
   alias Core.Meetings.Meeting
 
   on_mount {CoreWeb.Live.Hooks.MeetingAccess, :meeting_exists}
@@ -14,40 +14,28 @@ defmodule CoreWeb.Meetings.InviteLive do
       Phoenix.PubSub.subscribe(Core.PubSub, "attendee:#{socket.assigns.current_attendee.id}")
     end
 
-    invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
-    {:ok, assign(socket, :invitations, invitations)}
+    {:ok, socket}
   end
 
   @impl true
-  def handle_event("create", %{"duration" => duration}, socket) do
-    case Meetings.create_invitation(socket.assigns.current_attendee, %{duration: duration}) do
-      {:ok, invitation} ->
-        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
+  def handle_event("save", %{"title" => title}, socket) do
+    MeetingServer.update_meeting(
+      socket.assigns.meeting.id,
+      socket.assigns.current_attendee,
+      %{title: title}
+    )
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Successfully created an invitation, code: #{invitation.code}")
-         |> assign(:invitations, invitations)}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Something went wrong")}
-    end
+    {:noreply, socket}
   end
 
   @impl true
-  def handle_event("revoke", %{"id" => invitation_id}, socket) do
-    case Meetings.delete_invitation(socket.assigns.current_attendee, invitation_id) do
-      {:ok, _} ->
-        invitations = Meetings.list_meeting_invitations(socket.assigns.meeting)
+  def handle_event("delete", _, socket) do
+    MeetingServer.delete_meeting(
+      socket.assigns.meeting.id,
+      socket.assigns.current_attendee
+    )
 
-        {:noreply,
-         socket
-         |> put_flash(:info, "Successfully revoked an invitation")
-         |> assign(:invitations, invitations)}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Something went wrong")}
-    end
+    {:noreply, socket}
   end
 
   @impl true
