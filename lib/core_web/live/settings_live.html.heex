@@ -6,7 +6,9 @@
 
 <h1 class="font-bold text-2xl mb-4">Settings</h1>
 
-<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-md">
+<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-xs">
   <.input field={@form[:name]} placeholder="John Doe" class="mb-4" label="Your Name" />
-  <.button type="submit">Save changes</.button>
+  <.button type="submit">
+    <.icon name="hero-check" class="size-4 shrink-0" />
+    Save changes</.button>
 </.form>
