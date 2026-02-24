@@ -32,14 +32,22 @@
 <ul class="space-y-2">
   <li
     :for={invitation <- @invitations}
-    class="bg-gray-100 flex items-center justify-between max-w-lg py-2 px-3"
+    class="bg-gray-100 flex flex-wrap items-center justify-between max-w-lg py-2 px-3"
   >
-    <strong>
+    <strong class="text-nowrap">
       Code: {invitation.code}
     </strong>
-    <span>
+    <span class="text-nowrap">
       Expires at: {to_string(invitation.expires_at)}
     </span>
+    <button
+      class="bg-blue-200 px-3 py-1 text-nowrap"
+      phx-hook="CopyToClipboard"
+      id="invitation-url"
+      data-clipboard={"#{CoreWeb.Endpoint.url()}/meetings/#{@meeting.id}/join?code=#{invitation.code}"}
+    >
+      Copy link
+    </button>
     <button phx-click="revoke" phx-value-id={invitation.id} class="bg-red-200 px-3 py-1">
       Revoke
     </button>
