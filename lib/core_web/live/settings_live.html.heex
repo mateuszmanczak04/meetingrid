@@ -1,14 +1,19 @@
-<.link navigate={~p"/meetings"} class="block mb-4">
+<.link navigate={~p"/meetings"} class="block mb-6">
   <.button variant="secondary">
     <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to meetings list
   </.button>
 </.link>
 
-<h1 class="font-bold text-2xl mb-4">Settings</h1>
+<div class="max-w-md">
+  <h1 class="font-bold text-2xl mb-1">Settings</h1>
+  <p class="text-muted-foreground mb-6">Manage your profile.</p>
 
-<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-xs">
-  <.input field={@form[:name]} placeholder="John Doe" class="mb-4" label="Your Name" />
-  <.button type="submit">
-    <.icon name="hero-check" class="size-4 shrink-0" /> Save changes
-  </.button>
-</.form>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <.form for={@form} phx-change="validate" phx-submit="submit">
+      <.input field={@form[:name]} placeholder="John Doe" class="mb-5" label="Your Name" />
+      <.button type="submit">
+        <.icon name="hero-check" class="size-4 shrink-0" /> Save changes
+      </.button>
+    </.form>
+  </div>
+</div>

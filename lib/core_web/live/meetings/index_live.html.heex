@@ -1,54 +1,54 @@
-<h1 class="text-2xl font-bold mb-4">Your Meetings</h1>
-
-<div class="flex  gap-2">
-  <.link navigate={~p"/meetings/new"} class="mb-4">
-    <.button>
-      <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
-    </.button>
-  </.link>
-
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Your Meetings</h1>
   <.link navigate={~p"/settings"}>
-    <.button variant="secondary">
-      <.icon name="hero-cog" class="size-4 -translate-y-px" /> User settings
+    <.button variant="secondary" size="sm">
+      <.icon name="hero-cog" class="size-4 -translate-y-px" /> Settings
     </.button>
   </.link>
 </div>
+
+<.link navigate={~p"/meetings/new"} class="inline-block mb-6">
+  <.button>
+    <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create new meeting
+  </.button>
+</.link>
 
 <section class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
   <%= for attendee <- @attendees do %>
     <.link
       navigate={~p"/meetings/#{attendee.meeting.id}"}
       id={"attendee-#{attendee.id}"}
-      class="p-4 rounded-xl border flex flex-col"
+      class="group p-5 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-teal-300 transition-all flex flex-col"
     >
-      <h2 class="font-semibold text-lg">{attendee.meeting.title}</h2>
+      <h2 class="font-semibold text-lg group-hover:text-teal-700 transition-colors">
+        {attendee.meeting.title}
+      </h2>
       <p
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Day)}
         class="mb-2 text-sm text-muted-foreground"
       >
-        🕓 Time of the day
+        <.icon name="hero-clock-mini" class="size-3.5 inline -translate-y-px" /> Time of the day
       </p>
       <p
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
         class="mb-2 text-sm text-muted-foreground"
       >
-        📅 Day of the week
+        <.icon name="hero-calendar-mini" class="size-3.5 inline -translate-y-px" /> Day of the week
       </p>
-
       <p
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
         class="mb-2 text-sm text-muted-foreground"
       >
-        📆 Day of the month
+        <.icon name="hero-calendar-days-mini" class="size-3.5 inline -translate-y-px" /> Day of the month
       </p>
       <ul
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
-        class="grid grid-cols-7 gap-x-1 w-fit mb-4"
+        class="grid grid-cols-7 gap-x-1 w-fit mt-auto pt-2"
       >
         <li
           :for={day_number <- if attendee.meeting.config.include_weekends, do: 0..6, else: 0..4}
           data-selected={day_number in attendee.config.available_days && "true"}
-          class="size-4 rounded-sm transition-colors bg-neutral-200 data-[selected='true']:bg-green-400"
+          class="size-5 rounded transition-colors bg-gray-100 data-[selected='true']:bg-green-400"
         >
         </li>
       </ul>
@@ -56,4 +56,12 @@
   <% end %>
 </section>
 
-<p :if={length(@attendees) == 0} class="text-muted-foreground">You have no meetings yet</p>
+<div :if={length(@attendees) == 0} class="text-center py-16">
+  <.icon name="hero-calendar" class="mx-auto h-12 w-12 text-gray-300" />
+  <p class="mt-4 text-muted-foreground">You have no meetings yet</p>
+  <.link navigate={~p"/meetings/new"} class="inline-block mt-4">
+    <.button>
+      <.icon name="hero-plus" class="size-4 -translate-y-px" /> Create your first meeting
+    </.button>
+  </.link>
+</div>

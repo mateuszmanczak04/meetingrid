@@ -1,162 +1,182 @@
-<header class="flex flex-wrap gap-2 mb-6">
+<header class="flex flex-wrap items-center gap-2 mb-2">
   <.link navigate={~p"/meetings"}>
-    <.button variant="secondary">
+    <.button variant="secondary" size="sm">
       <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
-      Back to meetings list
+      Back
     </.button>
   </.link>
 
   <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/edit"}>
-    <.button variant="secondary">
+    <.button variant="secondary" size="sm">
       <.icon name="hero-cog" class="size-4 -translate-y-px shrink-0" /> Settings
     </.button>
   </.link>
 
   <.link :if={@current_attendee.role == :admin} navigate={~p"/meetings/#{@meeting.id}/invite"}>
-    <.button variant="secondary">
+    <.button variant="secondary" size="sm">
       <.icon name="hero-user-plus" class="size-4 -translate-y-px shrink-0" /> Invitations
     </.button>
   </.link>
 
-  <.button variant="danger" phx-click="leave" id="leave_button">
+  <.button variant="danger" size="sm" phx-click="leave" id="leave_button">
     <.icon name="hero-arrow-left-start-on-rectangle" class="size-4 -translate-y-px shrink-0" />
     Leave
   </.button>
 </header>
 
-<h1 class="font-bold text-2xl mb-4">{@meeting.title}</h1>
+<h1 class="font-bold text-2xl mb-1">{@meeting.title}</h1>
+<p class="text-sm text-muted-foreground mb-6">Click on cells in your column to toggle availability</p>
 
-<table
-  :if={@mode == :day}
-  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
->
-  <thead>
-    <tr>
-      <th class="bg-gray-100 w-40">Hour</th>
-      <th :for={attendee <- @attendees} class="bg-gray-100">
-        <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
-        <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
-        {attendee.user.name}
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr :for={hour <- 0..23}>
-      <td
-        data-hour={hour}
-        data-match={hour in @common_hours && "true"}
-        class="bg-gray-100 data-[match='true']:bg-green-200"
-      >
-        {hour}:00
-      </td>
-      <td
-        :for={attendee <- @attendees}
-        data-hour={hour}
-        data-selected={hour in attendee.config.available_hours && "true"}
-        class="transition-colors data-[selected='true']:bg-green-400"
-        phx-click={attendee.id == @current_attendee.id && "toggle_available_hour"}
-        phx-value-hour={hour}
-      >
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<table
-  :if={@mode == :week}
-  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
->
-  <thead>
-    <tr>
-      <th class="bg-gray-100 w-40">Attendee</th>
-      <%= for {text, index} <- Enum.with_index(if @meeting.config.include_weekends, do: ~w(Mon Tue Wed Thu Fri Sat Sun), else: ~w(Mon Tue Wed Thu Fri)) do %>
-        <th
-          data-day={index}
-          data-match={index in @common_days && "true"}
-          class="bg-gray-100 data-[match='true']:bg-green-200"
-        >
-          {text}
+<div class="overflow-x-auto -mx-4 px-4">
+  <table
+    :if={@mode == :day}
+    class="mt-2 w-full border-separate border-spacing-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden text-center text-sm [&_th]:border-b [&_th]:border-gray-200 [&_td]:border-b [&_td]:border-gray-100 table-fixed [&_tr]:h-10 [&_tr:last-child_td]:border-b-0"
+  >
+    <thead>
+      <tr>
+        <th class="bg-gray-50 w-40 font-medium text-gray-500 px-3">Hour</th>
+        <th :for={attendee <- @attendees} class="bg-gray-50 font-medium text-gray-700 px-2">
+          <span :if={attendee.role == :admin} class="text-teal-600 text-xs">(A)</span>
+          <span
+            :if={attendee.id == @current_attendee.id}
+            class="text-teal-600 text-xs font-semibold"
+          >
+            (You)
+          </span>
+          {attendee.user.name}
         </th>
-      <% end %>
-      <th :if={@current_attendee.role == :admin} class="bg-gray-100 w-36">
-        Options
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr :for={attendee <- @attendees} data-attendee={to_string(attendee.id)}>
-      <td class="text-nowrap truncate overflow-hidden">
-        <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
-        <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
-        {attendee.user.name}
-      </td>
-      <td
-        :for={day <- if @meeting.config.include_weekends, do: 0..6, else: 0..4}
-        data-day={day}
-        data-selected={day in attendee.config.available_days && "true"}
-        class="transition-colors data-[selected='true']:bg-green-400"
-        phx-click={attendee.id == @current_attendee.id && "toggle_available_day"}
-        phx-value-day={day}
-      >
-      </td>
-      <td :if={@current_attendee.role == :admin}>
-        <.button
-          :if={@current_attendee.id != attendee.id}
-          variant="danger"
-          size="xs"
-          phx-click="kick_attendee"
-          phx-value-attendee_id={attendee.id}
-          id={"kick_attendee-#{attendee.id}"}
+      </tr>
+    </thead>
+    <tbody>
+      <tr :for={hour <- 0..23}>
+        <td
+          data-hour={hour}
+          data-match={hour in @common_hours && "true"}
+          class="bg-gray-50 font-medium text-gray-500 data-[match='true']:bg-green-100 data-[match='true']:text-green-800"
         >
-          Kick
-        </.button>
-        <.button
-          :if={@current_attendee.id != attendee.id}
-          variant="secondary"
-          size="xs"
-          phx-click="update_attendee_role"
-          phx-value-attendee_id={attendee.id}
-          id={"update_attendee_role-#{attendee.id}"}
+          {hour}:00
+        </td>
+        <td
+          :for={attendee <- @attendees}
+          data-hour={hour}
+          data-selected={hour in attendee.config.available_hours && "true"}
+          class="transition-colors data-[selected='true']:bg-green-400"
+          phx-click={attendee.id == @current_attendee.id && "toggle_available_hour"}
+          phx-value-hour={hour}
         >
-          {if attendee.role == :admin, do: "Remove admin", else: "Make admin"}
-        </.button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-<table
-  :if={@mode == :month}
-  class="mt-8 border border-collapse w-full [&_th]:border [&_td]:border text-center table-fixed [&_tr]:h-10"
->
-  <thead>
-    <tr>
-      <th class="bg-gray-100 w-40">Day</th>
-      <th :for={attendee <- @attendees} class="bg-gray-100">
-        <span :if={attendee.role == :admin} class="text-red-500">(A)</span>
-        <span :if={attendee.id == @current_attendee.id} class="text-neutral-500">(You)</span>
-        {attendee.user.name}
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr :for={day <- 0..(@meeting.config.days_amount - 1)}>
-      <td
-        data-hour={day}
-        data-match={day in @common_days && "true"}
-        class="bg-gray-100 data-[match='true']:bg-green-200"
-      >
-        {day + 1}
-      </td>
-      <td
-        :for={attendee <- @attendees}
-        data-day={day}
-        data-selected={day in attendee.config.available_days && "true"}
-        class="transition-colors data-[selected='true']:bg-green-400"
-        phx-click={attendee.id == @current_attendee.id && "toggle_available_day"}
-        phx-value-day={day}
-      >
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <table
+    :if={@mode == :week}
+    class="mt-2 w-full border-separate border-spacing-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden text-center text-sm [&_th]:border-b [&_th]:border-gray-200 [&_td]:border-b [&_td]:border-gray-100 table-fixed [&_tr]:h-10 [&_tr:last-child_td]:border-b-0"
+  >
+    <thead>
+      <tr>
+        <th class="bg-gray-50 w-40 font-medium text-gray-500 px-3">Attendee</th>
+        <%= for {text, index} <- Enum.with_index(if @meeting.config.include_weekends, do: ~w(Mon Tue Wed Thu Fri Sat Sun), else: ~w(Mon Tue Wed Thu Fri)) do %>
+          <th
+            data-day={index}
+            data-match={index in @common_days && "true"}
+            class="bg-gray-50 font-medium text-gray-700 data-[match='true']:bg-green-100 data-[match='true']:text-green-800"
+          >
+            {text}
+          </th>
+        <% end %>
+        <th :if={@current_attendee.role == :admin} class="bg-gray-50 w-36 font-medium text-gray-500">
+          Options
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr :for={attendee <- @attendees} data-attendee={to_string(attendee.id)}>
+        <td class="text-nowrap truncate overflow-hidden text-left px-3">
+          <span :if={attendee.role == :admin} class="text-teal-600 text-xs">(A)</span>
+          <span
+            :if={attendee.id == @current_attendee.id}
+            class="text-teal-600 text-xs font-semibold"
+          >
+            (You)
+          </span>
+          {attendee.user.name}
+        </td>
+        <td
+          :for={day <- if @meeting.config.include_weekends, do: 0..6, else: 0..4}
+          data-day={day}
+          data-selected={day in attendee.config.available_days && "true"}
+          class="transition-colors data-[selected='true']:bg-green-400"
+          phx-click={attendee.id == @current_attendee.id && "toggle_available_day"}
+          phx-value-day={day}
+        >
+        </td>
+        <td :if={@current_attendee.role == :admin} class="px-2">
+          <div class="flex items-center justify-center gap-1">
+            <.button
+              :if={@current_attendee.id != attendee.id}
+              variant="danger"
+              size="xs"
+              phx-click="kick_attendee"
+              phx-value-attendee_id={attendee.id}
+              id={"kick_attendee-#{attendee.id}"}
+            >
+              Kick
+            </.button>
+            <.button
+              :if={@current_attendee.id != attendee.id}
+              variant="secondary"
+              size="xs"
+              phx-click="update_attendee_role"
+              phx-value-attendee_id={attendee.id}
+              id={"update_attendee_role-#{attendee.id}"}
+            >
+              {if attendee.role == :admin, do: "Remove admin", else: "Make admin"}
+            </.button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table
+    :if={@mode == :month}
+    class="mt-2 w-full border-separate border-spacing-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden text-center text-sm [&_th]:border-b [&_th]:border-gray-200 [&_td]:border-b [&_td]:border-gray-100 table-fixed [&_tr]:h-10 [&_tr:last-child_td]:border-b-0"
+  >
+    <thead>
+      <tr>
+        <th class="bg-gray-50 w-40 font-medium text-gray-500 px-3">Day</th>
+        <th :for={attendee <- @attendees} class="bg-gray-50 font-medium text-gray-700 px-2">
+          <span :if={attendee.role == :admin} class="text-teal-600 text-xs">(A)</span>
+          <span
+            :if={attendee.id == @current_attendee.id}
+            class="text-teal-600 text-xs font-semibold"
+          >
+            (You)
+          </span>
+          {attendee.user.name}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr :for={day <- 0..(@meeting.config.days_amount - 1)}>
+        <td
+          data-hour={day}
+          data-match={day in @common_days && "true"}
+          class="bg-gray-50 font-medium text-gray-500 data-[match='true']:bg-green-100 data-[match='true']:text-green-800"
+        >
+          {day + 1}
+        </td>
+        <td
+          :for={attendee <- @attendees}
+          data-day={day}
+          data-selected={day in attendee.config.available_days && "true"}
+          class="transition-colors data-[selected='true']:bg-green-400"
+          phx-click={attendee.id == @current_attendee.id && "toggle_available_day"}
+          phx-value-day={day}
+        >
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,46 +1,53 @@
 <.link navigate={~p"/meetings"}>
-  <.button variant="secondary" class="mb-4">
+  <.button variant="secondary" class="mb-6">
     <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px" /> Back to meetings list
   </.button>
 </.link>
 
-<h1 class="font-bold text-2xl mb-4">Create a new meeting</h1>
+<div class="max-w-md">
+  <h1 class="font-bold text-2xl mb-1">Create a new meeting</h1>
+  <p class="text-muted-foreground mb-6">Set up a meeting grid for your group to fill in.</p>
 
-<.form for={@form} phx-change="validate" phx-submit="submit" class="space-y-4 max-w-xs">
-  <.input label="Title" field={@form[:title]} placeholder="Beach party" required />
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <.form for={@form} phx-change="validate" phx-submit="submit" class="space-y-5">
+      <.input label="Title" field={@form[:title]} placeholder="Beach party" required />
 
-  <.input
-    type="select"
-    label="Mode"
-    options={[
-      "🕓 Time of the day": "day",
-      "📅 Day of the week": "week",
-      "📆 Day of the month": "month"
-    ]}
-    value="week"
-    name="config[mode]"
-    id="mode"
-  />
+      <.input
+        type="select"
+        label="Mode"
+        options={[
+          "🕓 Time of the day": "day",
+          "📅 Day of the week": "week",
+          "📆 Day of the month": "month"
+        ]}
+        value="week"
+        name="config[mode]"
+        id="mode"
+      />
 
-  <.input
-    type="checkbox"
-    label="Include weekends (only for Day of the week)"
-    name="config[include_weekends]"
-    id="include_weekends"
-  />
+      <.input
+        type="checkbox"
+        label="Include weekends (only for Day of the week)"
+        name="config[include_weekends]"
+        id="include_weekends"
+      />
 
-  <.input
-    type="select"
-    label="Days amount (only for Day of the month)"
-    name="config[days_amount]"
-    id="days_amount"
-    options={[
-      "28": "28",
-      "30": "30",
-      "31": "31"
-    ]}
-    value="30"
-  />
+      <.input
+        type="select"
+        label="Days amount (only for Day of the month)"
+        name="config[days_amount]"
+        id="days_amount"
+        options={[
+          "28": "28",
+          "30": "30",
+          "31": "31"
+        ]}
+        value="30"
+      />
 
-  <.button type="submit">Create meeting</.button>
-</.form>
+      <.button type="submit" class="w-full justify-center">
+        <.icon name="hero-plus" class="size-4" /> Create meeting
+      </.button>
+    </.form>
+  </div>
+</div>

@@ -1,17 +1,20 @@
-<.link navigate={~p"/meetings"} class="mb-4">
+<.link navigate={~p"/meetings"} class="mb-6">
   <.button variant="secondary">
     <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
     Back to meetings list
   </.button>
 </.link>
 
-<h1 class="text-2xl font-bold mt-4">Join meeting</h1>
+<div class="max-w-md mt-6">
+  <h1 class="text-2xl font-bold mb-1">Join meeting</h1>
+  <p class="text-muted-foreground mb-6">{@meeting.title}</p>
 
-<p class="mb-4 text-muted-foreground">{@meeting.title}</p>
-
-<.form for={@form} phx-change="validate" phx-submit="submit" class="max-w-xs">
-  <.input field={@form[:code]} label="Access code" class="mb-4" />
-  <.button type="submit" id="join-button">
-    Join meeting
-  </.button>
-</.form>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <.form for={@form} phx-change="validate" phx-submit="submit">
+      <.input field={@form[:code]} label="Access code" placeholder="Enter your invitation code" class="mb-5" />
+      <.button type="submit" id="join-button" class="w-full justify-center">
+        <.icon name="hero-arrow-right-end-on-rectangle" class="size-4" /> Join meeting
+      </.button>
+    </.form>
+  </div>
+</div>
