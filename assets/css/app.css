@@ -3,3 +3,24 @@
 @import 'tailwindcss/utilities';
 
 /* This file is for your main application CSS */
+
+@layer base {
+  body {
+    @apply antialiased text-gray-800;
+  }
+}
+
+@layer components {
+  /* Interactive grid cells */
+  td[phx-click] {
+    @apply cursor-pointer;
+  }
+
+  td[phx-click]:hover {
+    @apply bg-teal-100;
+  }
+
+  td[data-selected='true'][phx-click]:hover {
+    @apply bg-green-300;
+  }
+}

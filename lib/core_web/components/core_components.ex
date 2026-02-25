@@ -233,13 +233,13 @@ defmodule CoreWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 hover:opacity-90 transition-oapcity cursor-pointer font-medium flex items-center gap-1 text-nowrap",
-        @size == "default" && "text-sm h-10 px-3 rounded-lg",
-        @size == "sm" && "text-xs h-8 px-2 rounded-md",
-        @size == "xs" && "text-xs h-6 px-1 rounded-md",
-        @variant == "primary" && "bg-primary",
-        @variant == "secondary" && "bg-gray-100 text-gray-700",
-        @variant == "danger" && "bg-red-100 text-red-700",
+        "phx-submit-loading:opacity-75 transition-all cursor-pointer font-medium flex items-center gap-1.5 text-nowrap shadow-sm",
+        @size == "default" && "text-sm h-10 px-4 rounded-lg",
+        @size == "sm" && "text-xs h-8 px-3 rounded-md",
+        @size == "xs" && "text-xs h-6 px-2 rounded-md",
+        @variant == "primary" && "bg-primary hover:bg-[#78cbc5] active:bg-[#6ac0ba]",
+        @variant == "secondary" && "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 shadow-none",
+        @variant == "danger" && "bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-300",
         @class
       ]}
       {@rest}
@@ -326,7 +326,7 @@ defmodule CoreWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+          class="rounded border-zinc-300 text-teal-500 focus:ring-2 focus:ring-teal-400/20 focus:ring-offset-0"
           {@rest}
         />
         {@label}
@@ -344,7 +344,7 @@ defmodule CoreWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm",
+          "block w-full rounded-lg border border-gray-300 bg-white shadow-sm focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 sm:text-sm transition-colors",
           @class
         ]}
         multiple={@multiple}
@@ -366,9 +366,9 @@ defmodule CoreWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400",
+          "block w-full rounded-lg text-zinc-900 focus:ring-2 focus:ring-teal-400/20 sm:text-sm sm:leading-6 min-h-[6rem] transition-colors",
+          @errors == [] && "border-zinc-300 focus:border-teal-400",
+          @errors != [] && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/20",
           @class
         ]}
         {@rest}
@@ -389,9 +389,9 @@ defmodule CoreWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm h-10",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400",
+          "block w-full rounded-lg text-zinc-900 focus:ring-2 focus:ring-teal-400/20 sm:text-sm h-10 transition-colors",
+          @errors == [] && "border-zinc-300 focus:border-teal-400",
+          @errors != [] && "border-rose-400 focus:border-rose-400 focus:ring-rose-400/20",
           @class
         ]}
         {@rest}
