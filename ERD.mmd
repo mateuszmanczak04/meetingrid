@@ -7,8 +7,8 @@ erDiagram
   }
   attendees {
     integer id PK
-    array available_days
     varchar role
+    jsonb config
     integer meeting_id
     integer user_id
     timestamp inserted_at
@@ -17,7 +17,7 @@ erDiagram
   invitations {
     integer id PK
     varchar code
-    varchar role
+    timestamp expires_at
     integer meeting_id
     timestamp inserted_at
     timestamp updated_at
@@ -25,7 +25,6 @@ erDiagram
   meetings {
     integer id PK
     varchar title
-    varchar mode
     jsonb config
     timestamp inserted_at
     timestamp updated_at
