@@ -238,7 +238,8 @@ defmodule CoreWeb.CoreComponents do
         @size == "sm" && "text-xs h-8 px-3 rounded-md",
         @size == "xs" && "text-xs h-6 px-2 rounded-md",
         @variant == "primary" && "bg-primary hover:bg-[#78cbc5] active:bg-[#6ac0ba]",
-        @variant == "secondary" && "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 shadow-none",
+        @variant == "secondary" &&
+          "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 shadow-none",
         @variant == "danger" && "bg-red-100 text-red-700 hover:bg-red-200 active:bg-red-300",
         @class
       ]}

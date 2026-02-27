@@ -33,13 +33,15 @@
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}
         class="mb-2 text-sm text-muted-foreground"
       >
-        <.icon name="hero-calendar-mini" class="size-3.5 inline -translate-y-px" /> Day of the week
+        <.icon name="hero-calendar-mini" class="size-3.5 inline -translate-y-px" />
+        Day of the week
       </p>
       <p
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Month)}
         class="mb-2 text-sm text-muted-foreground"
       >
-        <.icon name="hero-calendar-days-mini" class="size-3.5 inline -translate-y-px" /> Day of the month
+        <.icon name="hero-calendar-days-mini" class="size-3.5 inline -translate-y-px" />
+        Day of the month
       </p>
       <ul
         :if={is_struct(attendee.meeting.config, Meetings.Meeting.Config.Week)}

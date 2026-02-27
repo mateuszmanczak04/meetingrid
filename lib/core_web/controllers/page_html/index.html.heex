@@ -14,8 +14,7 @@
     <%!-- Hero --%>
     <section class="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
       <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
-        Find the perfect time
-        <span class="text-teal-500">for everyone</span>
+        Find the perfect time <span class="text-teal-500">for everyone</span>
       </h1>
       <p class="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
         Stop the endless back-and-forth. Create a meeting grid, share it with your group, and
@@ -139,7 +138,10 @@
           </div>
         </div>
         <div class="flex gap-4">
-          <.icon name="hero-device-phone-mobile-solid" class="h-6 w-6 text-teal-500 shrink-0 mt-0.5" />
+          <.icon
+            name="hero-device-phone-mobile-solid"
+            class="h-6 w-6 text-teal-500 shrink-0 mt-0.5"
+          />
           <div>
             <h3 class="font-semibold text-gray-900">Works on any device</h3>
             <p class="mt-1 text-sm text-gray-600">
@@ -154,7 +156,9 @@
     <section class="bg-teal-50 py-16">
       <div class="max-w-2xl mx-auto px-6 text-center">
         <h2 class="text-2xl font-bold text-gray-900">Ready to find the perfect time?</h2>
-        <p class="mt-3 text-gray-600">It takes less than a minute to create your first meeting grid.</p>
+        <p class="mt-3 text-gray-600">
+          It takes less than a minute to create your first meeting grid.
+        </p>
         <.link
           href={~p"/meetings/new"}
           class="mt-8 inline-block rounded-lg bg-primary px-6 py-3 text-base font-semibold text-gray-900 hover:brightness-95 transition shadow-sm"

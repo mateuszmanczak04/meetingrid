@@ -1,8 +1,7 @@
 <header class="flex flex-wrap items-center gap-2 mb-2">
   <.link navigate={~p"/meetings"}>
     <.button variant="secondary" size="sm">
-      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" />
-      Back
+      <.icon name="hero-arrow-left-solid" class="h-4 w-4 -translate-y-px shrink-0" /> Back
     </.button>
   </.link>
 
@@ -25,7 +24,9 @@
 </header>
 
 <h1 class="font-bold text-2xl mb-1">{@meeting.title}</h1>
-<p class="text-sm text-muted-foreground mb-6">Click on cells in your column to toggle availability</p>
+<p class="text-sm text-muted-foreground mb-6">
+  Click on cells in your column to toggle availability
+</p>
 
 <div class="overflow-x-auto -mx-4 px-4">
   <table
@@ -85,7 +86,10 @@
             {text}
           </th>
         <% end %>
-        <th :if={@current_attendee.role == :admin} class="bg-gray-50 w-36 font-medium text-gray-500">
+        <th
+          :if={@current_attendee.role == :admin}
+          class="bg-gray-50 w-36 font-medium text-gray-500"
+        >
           Options
         </th>
       </tr>

@@ -11,7 +11,12 @@
 
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
     <.form for={@form} phx-change="validate" phx-submit="submit">
-      <.input field={@form[:code]} label="Access code" placeholder="Enter your invitation code" class="mb-5" />
+      <.input
+        field={@form[:code]}
+        label="Access code"
+        placeholder="Enter your invitation code"
+        class="mb-5"
+      />
       <.button type="submit" id="join-button" class="w-full justify-center">
         <.icon name="hero-arrow-right-end-on-rectangle" class="size-4" /> Join meeting
       </.button>
